@@ -1,0 +1,7 @@
+[project]
+name = "too-salty"
+version = "0.1.0"
+description = "Model Souping through Alignment"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []

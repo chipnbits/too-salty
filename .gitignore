@@ -1,0 +1,31 @@
+# Python cache files
+__pycache__/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.uv/
+
+# ML/DL Model files and weights
+*.pt
+*.pth
+*.ckpt
+
+# VSCode
+.vscode/
+
+# Claude code
+.claude/
+claude.md
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+logs/
