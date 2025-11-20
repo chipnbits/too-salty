@@ -20,8 +20,8 @@ def normalize_cifar100(tensor):
     """
     normalize = F.normalize(
         tensor,
-        mean=torch.tensor(CIFAR100_MEAN).view(-1, 1, 1),
-        std=torch.tensor(CIFAR100_STD).view(-1, 1, 1),
+        mean=torch.tensor(CIFAR100_MEAN, device=tensor.device).view(-1, 1, 1),
+        std=torch.tensor(CIFAR100_STD, device=tensor.device).view(-1, 1, 1),
     )
     return normalize
 
@@ -36,7 +36,9 @@ def denormalize_cifar100(tensor):
     Returns:
         Denormalized tensor image
     """
-    denormalize = tensor * torch.tensor(CIFAR100_STD).view(-1, 1, 1) + torch.tensor(CIFAR100_MEAN).view(-1, 1, 1)
+    denormalize = tensor * torch.tensor(CIFAR100_STD, device=tensor.device).view(-1, 1, 1) + torch.tensor(
+        CIFAR100_MEAN, device=tensor.device
+    ).view(-1, 1, 1)
     return denormalize
 
 
