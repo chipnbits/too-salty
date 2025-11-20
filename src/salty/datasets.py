@@ -16,33 +16,33 @@ from torchvision import datasets, transforms
 load_dotenv()
 
 # CIFAR-100 normalization constants
+# https://gist.github.com/weiaicunzai/e623931921efefd4c331622c344d8151
 CIFAR100_MEAN = (0.5071, 0.4867, 0.4408)
 CIFAR100_STD = (0.2675, 0.2565, 0.2761)
-
-# CIFAR-100-C download URL
 CIFAR100C_URL = "https://zenodo.org/record/3555552/files/CIFAR-100-C.tar"
+_CIFAR100_CLASS_NAMES = None  # cached list of class names
 
 # CIFAR-100-C corruption types
 CORRUPTION_TYPES = [
-    "gaussian_noise",
-    "shot_noise",
-    "impulse_noise",
-    "defocus_blur",
-    "glass_blur",
-    "motion_blur",
-    "zoom_blur",
-    "snow",
-    "frost",
-    "fog",
     "brightness",
     "contrast",
+    "defocus_blur",
     "elastic_transform",
-    "pixelate",
-    "jpeg_compression",
-    "speckle_noise",
+    "fog",
+    "frost",
     "gaussian_blur",
-    "spatter",
+    "gaussian_noise",
+    "glass_blur",
+    "impulse_noise",
+    "jpeg_compression",
+    "motion_blur",
+    "pixelate",
     "saturate",
+    "shot_noise",
+    "snow",
+    "spatter",
+    "speckle_noise",
+    "zoom_blur",
 ]
 
 
@@ -81,7 +81,6 @@ def get_cifar100_loaders(
     test_loader = DataLoader(
         test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=pin_memory
     )
-
     return train_loader, test_loader
 
 
@@ -279,3 +278,114 @@ def get_cifar100c_loaders_by_corruption(
         )
 
     return loaders
+
+
+def get_cifar100_class_names() -> list[str]:
+    """
+    Get the list of CIFAR-100 class names.
+    Returns:
+        List of class names
+    """
+    names = [
+        "apple",
+        "aquarium_fish",
+        "baby",
+        "bear",
+        "beaver",
+        "bed",
+        "bee",
+        "beetle",
+        "bicycle",
+        "bottle",
+        "bowl",
+        "boy",
+        "bridge",
+        "bus",
+        "butterfly",
+        "camel",
+        "can",
+        "castle",
+        "caterpillar",
+        "cattle",
+        "chair",
+        "chimpanzee",
+        "clock",
+        "cloud",
+        "cockroach",
+        "couch",
+        "crab",
+        "crocodile",
+        "cup",
+        "dinosaur",
+        "dolphin",
+        "elephant",
+        "flatfish",
+        "forest",
+        "fox",
+        "girl",
+        "hamster",
+        "house",
+        "kangaroo",
+        "keyboard",
+        "lamp",
+        "lawn_mower",
+        "leopard",
+        "lion",
+        "lizard",
+        "lobster",
+        "man",
+        "maple_tree",
+        "motorcycle",
+        "mountain",
+        "mouse",
+        "mushroom",
+        "oak_tree",
+        "orange",
+        "orchid",
+        "otter",
+        "palm_tree",
+        "pear",
+        "pickup_truck",
+        "pine_tree",
+        "plain",
+        "plate",
+        "poppy",
+        "porcupine",
+        "possum",
+        "rabbit",
+        "raccoon",
+        "ray",
+        "road",
+        "rocket",
+        "rose",
+        "sea",
+        "seal",
+        "shark",
+        "shrew",
+        "skunk",
+        "skyscraper",
+        "snail",
+        "snake",
+        "spider",
+        "squirrel",
+        "streetcar",
+        "sunflower",
+        "sweet_pepper",
+        "table",
+        "tank",
+        "telephone",
+        "television",
+        "tiger",
+        "tractor",
+        "train",
+        "trout",
+        "tulip",
+        "turtle",
+        "wardrobe",
+        "whale",
+        "willow_tree",
+        "wolf",
+        "woman",
+        "worm",
+    ]
+    return names
