@@ -1,11 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
-name = "too-salty"
+name = "salty"
 version = "0.1.0"
 description = "Model Souping through Alignment"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "dotenv>=0.9.9",
+    "einops>=0.8.1",
+    "ipykernel>=7.1.0",
+    "matplotlib>=3.10.7",
     "numpy>=2.3.5",
     "pillow>=11.2.0",
     "python-dotenv>=1.0.0",
@@ -13,6 +20,9 @@ dependencies = [
     "torchvision>=0.24.1",
     "tqdm>=4.67.1",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/salty"]
 
 
 [project.optional-dependencies]

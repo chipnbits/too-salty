@@ -16,6 +16,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from torchvision import datasets
 
+from salty.datasets import CIFAR100C_URL
+
 # Load environment variables
 load_dotenv()
 
