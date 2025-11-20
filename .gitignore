@@ -16,6 +16,9 @@ venv.bak/
 *.pth
 *.ckpt
 
+# Dataset files
+data/
+
 # VSCode
 .vscode/
 
