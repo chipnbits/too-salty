@@ -35,26 +35,31 @@ cu130 = [
   "torch>=2.7.0",
   "torchvision>=0.22.0",
 ]
+cu128 = [
+  "torch>=2.7.0",
+  "torchvision>=0.22.0",
+]
 
 [tool.uv]
-# Make it impossible to enable both extras at once
+# Make it impossible to enable more than one extra at once
 conflicts = [
   [
     { extra = "cpu" },
     { extra = "cu130" },
+    { extra = "cu128" },
   ],
 ]
 
 [tool.uv.sources]
 torch = [
-  # When the `cpu` extra is enabled, use the CPU index
-  { index = "pytorch-cpu",  extra = "cpu" },
-  # When the `cu130` extra is enabled, use the CUDA 13.0 index
+  { index = "pytorch-cpu",   extra = "cpu" },
   { index = "pytorch-cu130", extra = "cu130" },
+  { index = "pytorch-cu128", extra = "cu128" },
 ]
 torchvision = [
-  { index = "pytorch-cpu",  extra = "cpu" },
+  { index = "pytorch-cpu",   extra = "cpu" },
   { index = "pytorch-cu130", extra = "cu130" },
+  { index = "pytorch-cu128", extra = "cu128" },
 ]
 
 [[tool.uv.index]]
@@ -65,6 +70,11 @@ explicit = true
 [[tool.uv.index]]
 name = "pytorch-cu130"
 url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
 explicit = true
 
 [dependency-groups]
