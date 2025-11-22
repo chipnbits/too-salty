@@ -1,0 +1,39 @@
+# Names are used to store the local .pt files
+project_name: "cifar100-resnet50"  # Wandb project name
+run_name: "baseline-resnet50"  # Wandb run name
+
+data:
+  num_classes: 100
+  validation_split: 0.05 # 5% training sample held out for validation
+  split_seed: 42 # random seed for data splitting
+
+model:
+  name: "resnet50"  # Option to add vit later
+  pretrained: false
+  checkpoint_path: null  # or "models/pretrained-resnet50.pt"
+
+training:
+  epochs: 200
+  batch_size: 128
+  num_workers: 4
+  mixed_precision: true
+
+optimizer: # SGD, Adam
+  name: "SGD"
+  lr: 0.1
+  momentum: 0.9
+  weight_decay: 0.0005
+  nesterov: true
+
+scheduler: # MultiStepLR, StepLR, None
+  name: "MultiStepLR"
+  milestones: [100, 150]  # For MultiStepLR
+  step_size: 30          # For StepLR
+  gamma: 0.2
+
+logging:
+  log_interval: 50      # log to wandb every N training steps
+  val_interval: 1       # run validation every N epochs
+  checkpoint_interval: 10 # spacing to save model checkpoints (in epochs)
+
+
