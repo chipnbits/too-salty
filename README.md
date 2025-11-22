@@ -68,7 +68,7 @@ uv run python build_dataset.py --skip-cifar100   # Skip CIFAR-100 download
 
 #### 6. Setup precommit hooks for code quality:
 ```bash
-uv pre-commit install
+uv run pre-commit install
 ```
 Precommit hooks are added for `black` formatter and `isort` import ordering. They will run automatically on `git commit`.
 
