@@ -20,7 +20,6 @@ load_dotenv()
 CIFAR100_MEAN = (0.5071, 0.4867, 0.4408)
 CIFAR100_STD = (0.2675, 0.2565, 0.2761)
 CIFAR100C_URL = "https://zenodo.org/record/3555552/files/CIFAR-100-C.tar"
-_CIFAR100_CLASS_NAMES = None  # cached list of class names
 
 # CIFAR-100-C corruption types
 CORRUPTION_TYPES = [
@@ -51,28 +50,55 @@ def get_cifar100_loaders(
     num_workers: int = 4,
     data_dir: Optional[str] = None,
     pin_memory: bool = True,
-) -> Tuple[DataLoader, DataLoader]:
+    val_ratio: float = 0.0,
+    seed: int = 42,
+) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """
-    Get CIFAR-100 train and test DataLoaders with standard normalization.
+    Get CIFAR-100 train, validation, and test DataLoaders with standard normalization.
     Assumes datasets have been pre-downloaded using build_dataset.py.
 
     Args:
-        batch_size: Batch size for both train and test loaders
+        batch_size: Batch size for all loaders
         num_workers: Number of worker processes for data loading
         data_dir: Directory containing CIFAR-100 data (default: from DATA_DIR env var or './data')
         pin_memory: Whether to pin memory for faster GPU transfer
+        val_ratio: Fraction of training data to use for validation (0.0 to 1.0)
+                   If 0.0, validation loader will be empty (default behavior)
+        seed: Random seed for reproducible train/val split
 
     Returns:
-        Tuple of (train_loader, test_loader)
+        Tuple of (train_loader, val_loader, test_loader)
     """
     if data_dir is None:
         data_dir = os.getenv("DATA_DIR", "./data")
 
+    if val_ratio < 0.0 or val_ratio >= 1.0:
+        raise ValueError(f"val_ratio must be between 0.0 and 1.0, got {val_ratio}")
+
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(CIFAR100_MEAN, CIFAR100_STD)])
 
     train_dataset = datasets.CIFAR100(root=data_dir, train=True, download=False, transform=transform)
-
     test_dataset = datasets.CIFAR100(root=data_dir, train=False, download=False, transform=transform)
+
+    # Split train dataset into train and validation if requested
+    if val_ratio > 0.0:
+
+        # Use a fixed generator for reproducible splits
+        from torch.utils.data import random_split
+
+        generator = torch.Generator().manual_seed(seed)
+
+        val_size = int(len(train_dataset) * val_ratio)
+        train_size = len(train_dataset) - val_size
+
+        train_dataset, val_dataset = random_split(train_dataset, [train_size, val_size], generator=generator)
+
+        val_loader = DataLoader(
+            val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=pin_memory
+        )
+    else:
+        # Create an empty validation loader
+        val_loader = DataLoader([], batch_size=batch_size, shuffle=False)
 
     train_loader = DataLoader(
         train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=pin_memory
@@ -81,7 +107,8 @@ def get_cifar100_loaders(
     test_loader = DataLoader(
         test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=pin_memory
     )
-    return train_loader, test_loader
+
+    return train_loader, val_loader, test_loader
 
 
 class CIFAR100CDataset(Dataset):

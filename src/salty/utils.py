@@ -4,6 +4,7 @@ import einops
 import matplotlib.pyplot as plt
 import torch
 import torch.functional as F
+import yaml
 
 from salty.datasets import CIFAR100_MEAN, CIFAR100_STD
 
@@ -104,3 +105,32 @@ def show_batch_with_labels(images, labels, class_names, pad=4):
 
     plt.tight_layout()
     plt.show()
+
+
+def load_config_from_yaml(yaml_path: str) -> dict:
+    """Load configuration from a YAML file."""
+    import yaml
+
+    with open(yaml_path, "r") as f:
+        config = yaml.safe_load(f)
+    return config
+
+
+class RunningAverage:
+    """A simple class that maintains the running average of a quantity."""
+
+    def __init__(self, val=0.0):
+        self.steps = 0
+        self.total = val
+
+    def update(self, val: float) -> None:
+        self.total += val
+        self.steps += 1
+
+    @property
+    def average(self) -> float:
+        return self.total / self.steps if self.steps > 0 else ZeroDivisionError("No steps to compute average.")
+
+    @property
+    def value(self) -> float:
+        return self.total
