@@ -7,7 +7,6 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import wandb
 import yaml
 from dotenv import load_dotenv
 from torch.optim.lr_scheduler import MultiStepLR
@@ -15,6 +14,7 @@ from torch.utils.data import DataLoader
 from torchvision import models
 from tqdm import tqdm
 
+import wandb
 from salty.datasets import get_cifar100_class_names, get_cifar100_loaders
 from salty.models import get_resnet50_model
 from salty.utils import (
@@ -49,7 +49,7 @@ def train_loop(
     num_epochs = cfg["training"]["epochs"]
     val_interval = cfg["logging"]["val_interval"]
     ckpt_interval = cfg["logging"]["checkpoint_interval"]
-    save_dir = os.join(MODEL_DIR, cfg.get("project_name"), cfg.get("run_name"))
+    save_dir = os.path.join(MODEL_DIR, cfg.get("project_name"), cfg.get("run_name"))
 
     os.makedirs(save_dir, exist_ok=True)
 
