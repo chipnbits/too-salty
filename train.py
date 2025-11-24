@@ -66,10 +66,6 @@ def train_loop(
             scaler=scaler,
         )
 
-        # LR step after epoch if scheduler is defined
-        if scheduler is not None:
-            scheduler.step()
-
         # validate every val_interval epochs
         if (epoch + 1) % val_interval == 0:
             val_loss, val_acc = validate(
@@ -82,6 +78,7 @@ def train_loop(
         else:
             val_loss, val_acc = None, None
 
+        # Step the scheduler each epoch
         if scheduler is not None:
             scheduler.step()
 
@@ -279,6 +276,12 @@ def build_scheduler(sch_cfg, optimizer):
             optimizer,
             step_size=sch_cfg.get("step_size", 30),
             gamma=sch_cfg.get("gamma"),
+        )
+    elif name == "cosineannealinglr":
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(
+            optimizer,
+            T_max=sch_cfg.get("T_max", 280),
+            eta_min=sch_cfg.get("eta_min", 0),
         )
     elif name == "none" or name is None:
         scheduler = None

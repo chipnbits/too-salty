@@ -16,7 +16,7 @@ training:
   epochs: 200
   batch_size: 128
   num_workers: 4
-  mixed_precision: true
+  mixed_precision: false
 
 optimizer: # SGD, Adam
   name: "SGD"
@@ -25,11 +25,14 @@ optimizer: # SGD, Adam
   weight_decay: 0.0005
   nesterov: true
 
-scheduler: # MultiStepLR, StepLR, None
-  name: "MultiStepLR"
+scheduler: # MultiStepLR, StepLR, CosineAnnealingLR, None
+  name: "CosineAnnealingLR"
   milestones: [100, 150]  # For MultiStepLR
   step_size: 30          # For StepLR
+  T_max: 280            # For CosineAnnealingLR
+  eta_min: 0            # For CosineAnnealingLR
   gamma: 0.2
+
 
 logging:
   log_interval: 50      # log to wandb every N training steps
