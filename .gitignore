@@ -15,6 +15,7 @@ venv.bak/
 *.pt
 *.pth
 *.ckpt
+*.tar.gz
 
 # Dataset files
 data/
@@ -24,7 +25,7 @@ data/
 
 # Claude code
 .claude/
-claude.md
+CLAUDE.md
 
 # macOS
 .DS_Store

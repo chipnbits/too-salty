@@ -52,6 +52,7 @@ def get_cifar100_loaders(
     pin_memory: bool = True,
     val_ratio: float = 0.0,
     seed: int = 42,
+    augment: bool = True,
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """
     Get CIFAR-100 train, validation, and test DataLoaders with standard normalization.
@@ -80,6 +81,16 @@ def get_cifar100_loaders(
     train_dataset = datasets.CIFAR100(root=data_dir, train=True, download=False, transform=transform)
     test_dataset = datasets.CIFAR100(root=data_dir, train=False, download=False, transform=transform)
 
+    if augment:
+        # Apply simple data augmentation to training dataset
+        train_dataset.transform = transforms.Compose(
+            [
+                transforms.RandomCrop(32, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(CIFAR100_MEAN, CIFAR100_STD),
+            ]
+        )
     # Split train dataset into train and validation if requested
     if val_ratio > 0.0:
 

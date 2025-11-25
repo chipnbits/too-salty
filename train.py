@@ -20,12 +20,13 @@ from salty.models import get_resnet50_model
 from salty.utils import (
     RunningAverage,
     denormalize_cifar100,
+    load_checkpoint,
+    load_config,
     load_config_from_yaml,
     normalize_cifar100,
+    save_checkpoint,
     show_batch_with_labels,
 )
-
-# TODO: add training loop, see https://github.com/weiaicunzai/pytorch-cifar100/blob/master/train.py for reference
 
 load_dotenv()
 
@@ -45,6 +46,7 @@ def train_loop(
     start_epoch=0,
     best_val_acc=None,
     scaler=None,
+    global_step=0,
 ):
     num_epochs = cfg["training"]["epochs"]
     val_interval = cfg["logging"]["val_interval"]
@@ -55,7 +57,7 @@ def train_loop(
 
     for epoch in range(start_epoch, num_epochs):
         # train for one epoch
-        train_loss, train_acc = train_one_epoch(
+        train_loss, train_acc, global_step = train_one_epoch(
             model,
             train_loader,
             loss_fn,
@@ -64,6 +66,7 @@ def train_loop(
             epoch,
             cfg,
             scaler=scaler,
+            global_step=global_step,
         )
 
         # validate every val_interval epochs
@@ -92,7 +95,9 @@ def train_loop(
                     "val/acc": val_acc,
                     "epoch": epoch,
                     "lr": optimizer.param_groups[0]["lr"],
-                }
+                    "global_step": global_step,
+                },
+                step=global_step,
             )
 
         # Save last checkpoint
@@ -106,6 +111,7 @@ def train_loop(
             epoch,
             cfg,
             best_val_acc=best_val_acc,
+            global_step=global_step,
         )
 
         # Epoch checkpoint every N epochs
@@ -120,6 +126,7 @@ def train_loop(
                 epoch,
                 cfg,
                 best_val_acc=best_val_acc,
+                global_step=global_step,
             )
 
         # Save best model
@@ -135,6 +142,7 @@ def train_loop(
                 epoch,
                 cfg,
                 best_val_acc=best_val_acc,
+                global_step=global_step,
             )
             print(f"New best model saved with val_acc: {best_val_acc:.2f}%")
 
@@ -148,6 +156,7 @@ def train_one_epoch(
     epoch,
     cfg,
     scaler=None,
+    global_step=0,
 ):
     model.train()
     running_loss = 0.0
@@ -187,7 +196,7 @@ def train_one_epoch(
         pbar.set_postfix({"loss": f"{avg_loss:.4f}", "acc": f"{avg_acc:.2f}%"})
 
         # Step-level logging to wandb
-        global_step = epoch * len(train_loader) + batch_idx
+        global_step += 1
         if wandb.run is not None and (batch_idx % log_interval == 0):
             wandb.log(
                 {
@@ -196,13 +205,14 @@ def train_one_epoch(
                     "train/step": global_step,
                     "train/epoch": epoch,
                     "lr": optimizer.param_groups[0]["lr"],
-                }
+                },
+                step=global_step,
             )
 
     epoch_loss = running_loss / running_total
     epoch_acc = 100.0 * running_correct / running_total
 
-    return epoch_loss, epoch_acc
+    return epoch_loss, epoch_acc, global_step
 
 
 @torch.no_grad()
@@ -290,58 +300,6 @@ def build_scheduler(sch_cfg, optimizer):
     return scheduler
 
 
-def load_config(config_path):
-    path = Path(config_path)
-    with open(config_path, "r") as f:
-        config = yaml.safe_load(f)
-    return config
-
-
-def save_checkpoint(
-    path,
-    model,
-    optimizer,
-    scheduler,
-    scaler,
-    epoch,
-    cfg,
-    best_val_acc=None,
-):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    state = {
-        "epoch": epoch,
-        "model_state": model.state_dict(),
-        "optimizer_state": optimizer.state_dict() if optimizer is not None else None,
-        "scheduler_state": scheduler.state_dict() if scheduler is not None else None,
-        "scaler_state": scaler.state_dict() if scaler is not None else None,
-        "config": cfg,
-        "best_val_acc": best_val_acc,
-    }
-    torch.save(state, path)
-    print(f"Saved checkpoint: {path}")
-
-
-def load_checkpoint(path, model: torch.nn.Module, optimizer=None, scheduler=None, scaler=None):
-    print(f"Loading checkpoint from {path}")
-    checkpoint = torch.load(path, map_location="cpu")
-    model.load_state_dict(checkpoint["model_state"])
-
-    if optimizer is not None and checkpoint.get("optimizer_state") is not None:
-        optimizer.load_state_dict(checkpoint["optimizer_state"])
-
-    if scheduler is not None and checkpoint.get("scheduler_state") is not None:
-        scheduler.load_state_dict(checkpoint["scheduler_state"])
-
-    if scaler is not None and checkpoint.get("scaler_state") is not None:
-        scaler.load_state_dict(checkpoint["scaler_state"])
-
-    start_epoch = checkpoint.get("epoch", 0) + 1
-    best_val_acc = checkpoint.get("best_val_acc", None)
-    loaded_cfg = checkpoint.get("config", None)
-
-    return start_epoch, best_val_acc, loaded_cfg
-
-
 def get_device(config_device=None):
     if config_device is not None:
         device = config_device
@@ -389,12 +347,38 @@ if __name__ == "__main__":
         data_dir=DATA_DIR,
         val_ratio=config["data"].get("validation_split"),
         seed=config["data"]["split_seed"],
+        augment=config["data"].get("augment", True),
     )
 
     device = get_device(args.device)  # Get device override or auto-detect from system
     model = model.to(device)
 
-    train_loss_fn = nn.CrossEntropyLoss()
+    train_loss_fn = nn.CrossEntropyLoss(label_smoothing=0.1)
+
+    # ------------------------
+    # Resume logic
+    # ------------------------
+    start_epoch = 0
+    best_val_acc = None
+    start_global_step = 0
+    wandb_run_id = None
+
+    resume_cfg = config.get("resume", {})
+    resume_path = resume_cfg.get("checkpoint_path", None)
+
+    if resume_path is not None:
+        start_epoch, best_val_acc, loaded_cfg, start_global_step, wandb_run_id = load_checkpoint(
+            resume_path,
+            model,
+            optimizer=optimizer,
+            scheduler=scheduler,
+        )
+        print(
+            f"Resumed from epoch {start_epoch}, "
+            f"best_val_acc={best_val_acc}, "
+            f"start_step={start_global_step}, "
+            f"wandb_run_id={wandb_run_id}"
+        )
 
     # ------------------------
     # wandb init
@@ -404,27 +388,6 @@ if __name__ == "__main__":
         name=config.get("run_name", None),
         config=deepcopy(config),
     )
-
-    # ------------------------
-    # Resume logic
-    # ------------------------
-    start_epoch = 0
-    best_val_acc = None
-
-    resume_cfg = config.get("resume", {})
-    resume_path = resume_cfg.get("checkpoint_path", None)
-
-    if resume_path is not None:
-        start_epoch, best_val_acc, loaded_cfg = load_checkpoint(
-            resume_path,
-            model,
-            optimizer=optimizer,
-            scheduler=scheduler,
-        )
-
-        # Optionally sanity-check config consistency
-        # (for branching, you may *want* changes in optimizer / scheduler etc.)
-        print(f"Resumed from epoch {start_epoch}, best_val_acc={best_val_acc}")
 
     # ------------------------
     # Training loop
@@ -441,6 +404,7 @@ if __name__ == "__main__":
         config,
         start_epoch=start_epoch,
         best_val_acc=best_val_acc,
+        global_step=start_global_step,
     )
 
     # images, labels = next(iter(train_loader))

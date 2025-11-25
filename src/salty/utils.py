@@ -1,11 +1,15 @@
 import math
+import os
+from pathlib import Path
 
 import einops
 import matplotlib.pyplot as plt
 import torch
 import torch.functional as F
 import yaml
+from dotenv import load_dotenv
 
+import wandb
 from salty.datasets import CIFAR100_MEAN, CIFAR100_STD
 
 
@@ -134,3 +138,66 @@ class RunningAverage:
     @property
     def value(self) -> float:
         return self.total
+
+
+def load_config(config_path):
+    path = Path(config_path)
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+    return config
+
+
+def save_checkpoint(
+    path,
+    model,
+    optimizer,
+    scheduler,
+    scaler,
+    epoch,
+    cfg,
+    best_val_acc=None,
+    global_step=None,
+):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    state = {
+        "epoch": epoch,
+        "model_state": model.state_dict(),
+        "optimizer_state": optimizer.state_dict() if optimizer is not None else None,
+        "scheduler_state": scheduler.state_dict() if scheduler is not None else None,
+        "scaler_state": scaler.state_dict() if scaler is not None else None,
+        "config": cfg,
+        "best_val_acc": best_val_acc,
+        "global_step": global_step,
+        "wandb_run_id": wandb.run.id if wandb.run is not None else None,
+    }
+    torch.save(state, path)
+    print(f"Saved checkpoint: {path}")
+
+
+def load_checkpoint(path, model: torch.nn.Module, optimizer=None, scheduler=None, scaler=None):
+    print(f"Loading checkpoint from {path}")
+    checkpoint = torch.load(path, map_location="cpu")
+    model.load_state_dict(checkpoint["model_state"])
+
+    if optimizer is not None and checkpoint.get("optimizer_state") is not None:
+        optimizer.load_state_dict(checkpoint["optimizer_state"])
+
+    if scheduler is not None and checkpoint.get("scheduler_state") is not None:
+        scheduler.load_state_dict(checkpoint["scheduler_state"])
+
+    if scaler is not None and checkpoint.get("scaler_state") is not None:
+        scaler.load_state_dict(checkpoint["scaler_state"])
+
+    start_epoch = checkpoint.get("epoch", 0) + 1
+    best_val_acc = checkpoint.get("best_val_acc", None)
+    loaded_cfg = checkpoint.get("config", None)
+    global_step = checkpoint.get("global_step", 0)
+    wandb_run_id = checkpoint.get("wandb_run_id", None)
+
+    return start_epoch, best_val_acc, loaded_cfg, global_step, wandb_run_id
+
+
+def load_checkpoint_config(path):
+    checkpoint = torch.load(path, map_location="cpu")
+    loaded_cfg = checkpoint.get("config", None)
+    return loaded_cfg

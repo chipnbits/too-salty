@@ -4,6 +4,7 @@ run_name: "baseline-resnet50"  # Wandb run name
 
 data:
   num_classes: 100
+  augment: true  # Enable data augmentation
   validation_split: 0.05 # 5% training sample held out for validation
   split_seed: 42 # random seed for data splitting
 
@@ -13,7 +14,7 @@ model:
   checkpoint_path: null  # or "models/pretrained-resnet50.pt"
 
 training:
-  epochs: 200
+  epochs: 300
   batch_size: 128
   num_workers: 4
   mixed_precision: false
@@ -32,7 +33,6 @@ scheduler: # MultiStepLR, StepLR, CosineAnnealingLR, None
   T_max: 280            # For CosineAnnealingLR
   eta_min: 0            # For CosineAnnealingLR
   gamma: 0.2
-
 
 logging:
   log_interval: 50      # log to wandb every N training steps
