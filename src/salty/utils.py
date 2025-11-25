@@ -176,7 +176,7 @@ def save_checkpoint(
 
 def load_checkpoint(path, model: torch.nn.Module, optimizer=None, scheduler=None, scaler=None):
     print(f"Loading checkpoint from {path}")
-    checkpoint = torch.load(path, map_location="cpu")
+    checkpoint = torch.load(path, map_location="cpu", weights_only=False)
     model.load_state_dict(checkpoint["model_state"])
 
     if optimizer is not None and checkpoint.get("optimizer_state") is not None:

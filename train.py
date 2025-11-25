@@ -18,7 +18,6 @@ import wandb
 from salty.datasets import get_cifar100_class_names, get_cifar100_loaders
 from salty.models import get_resnet50_model
 from salty.utils import (
-    RunningAverage,
     denormalize_cifar100,
     load_checkpoint,
     load_config,
