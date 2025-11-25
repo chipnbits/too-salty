@@ -75,6 +75,6 @@ def cleanup_soup_models(soup_dir):
 
 if __name__ == "__main__":
     consolidate_soup_models(ROOT_DIR, SOUP_DIR)
-    archive_path = compress_soup_models_targz(SOUP_DIR)
-    cleanup_soup_models(SOUP_DIR)
-    print(f"\nDone. Final archive: {archive_path}")
+    # archive_path = compress_soup_models_targz(SOUP_DIR)
+    # cleanup_soup_models(SOUP_DIR)
+    # print(f"\nDone. Final archive: {archive_path}")
