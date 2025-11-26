@@ -2,36 +2,21 @@
 An evaluation script for pretrained models on both CIFAR-100 test and CIFAR-100C
 """
 
-import argparse
 import os
 import re
-from copy import deepcopy
-from pathlib import Path
 
 import pandas as pd
 import torch
-import torch.nn as nn
-import torch.optim as optim
 from dotenv import load_dotenv
 from tqdm import tqdm
 
-import wandb
 from salty.datasets import (
-    get_cifar100_class_names,
     get_cifar100_loaders,
-    get_cifar100c_loader,
     get_cifar100c_loaders_by_corruption,
 )
 from salty.models import get_resnet50_model
 from salty.utils import (
-    RunningAverage,
-    denormalize_cifar100,
     load_checkpoint,
-    load_config,
-    load_config_from_yaml,
-    normalize_cifar100,
-    save_checkpoint,
-    show_batch_with_labels,
 )
 
 load_dotenv()

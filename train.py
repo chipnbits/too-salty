@@ -21,7 +21,6 @@ from salty.utils import (
     denormalize_cifar100,
     load_checkpoint,
     load_config,
-    load_config_from_yaml,
     normalize_cifar100,
     save_checkpoint,
     show_batch_with_labels,
