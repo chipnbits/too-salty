@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import torch
 import torch.functional as F
 import yaml
-from dotenv import load_dotenv
 
 import wandb
 from salty.datasets import CIFAR100_MEAN, CIFAR100_STD
@@ -109,15 +108,6 @@ def show_batch_with_labels(images, labels, class_names, pad=4):
 
     plt.tight_layout()
     plt.show()
-
-
-def load_config_from_yaml(yaml_path: str) -> dict:
-    """Load configuration from a YAML file."""
-    import yaml
-
-    with open(yaml_path, "r") as f:
-        config = yaml.safe_load(f)
-    return config
 
 
 class RunningAverage:
