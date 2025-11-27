@@ -1,3 +1,4 @@
+import copy
 import math
 import os
 from pathlib import Path
@@ -191,3 +192,44 @@ def load_checkpoint_config(path):
     checkpoint = torch.load(path, map_location="cpu")
     loaded_cfg = checkpoint.get("config", None)
     return loaded_cfg
+
+
+def soup_models(modelA, modelB, alpha=0.5):
+    """
+    Create a simple model soup by averaging the parameters of two models.
+
+    Args:
+        modelA: First model (torch.nn.Module)
+        modelB: Second model (torch.nn.Module)
+        alpha: Weighting factor for modelA (0 <= alpha <= 1)
+
+    Returns:
+        A new model with averaged parameters.
+    """
+    # Basic sanity checks
+    if type(modelA) is not type(modelB):
+        raise ValueError("modelA and modelB must be of the same type for simple parameter soup.")
+
+    # Make a real new model by deep-copying modelA
+    soup_model = copy.deepcopy(modelA)
+
+    state_dictA = modelA.state_dict()
+    state_dictB = modelB.state_dict()
+    soup_state_dict = {}
+
+    for key in state_dictA.keys():
+        if key not in state_dictB:
+            raise KeyError(f"Key {key} is missing in modelB's state_dict.")
+
+        tensorA = state_dictA[key]
+        tensorB = state_dictB[key]
+
+        # For non-floating tensors (e.g. some buffers), you might just copy from A
+        if not torch.is_floating_point(tensorA) or not torch.is_floating_point(tensorB):
+            # e.g. running_bn_num_batches_tracked is int; averaging makes no sense
+            soup_state_dict[key] = tensorA
+        else:
+            soup_state_dict[key] = alpha * tensorA + (1 - alpha) * tensorB
+
+    soup_model.load_state_dict(soup_state_dict)
+    return soup_model
