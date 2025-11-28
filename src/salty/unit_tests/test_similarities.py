@@ -212,19 +212,3 @@ def test_compare_resnet50_pair_flags_control_outputs():
     # enabled
     assert "cka_logits" in stats
     assert "cka_features" not in stats
-
-
-def main():
-    test_l2_and_cosine_identical_models()
-    test_l2_and_cosine_different_models()
-    test_probe_set_similarities_identical_models()
-    test_probe_set_similarities_different_models_reasonable_values()
-    test_probe_set_similarities_flags_disable_metrics()
-    test_probe_set_similarities_empty_probe_set()
-    test_compare_resnet50_pair_identical_models()
-    test_compare_resnet50_pair_flags_control_outputs()
-    print("All tests passed.")
-
-
-if __name__ == "__main__":
-    main()

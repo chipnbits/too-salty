@@ -1,6 +1,5 @@
 """Similarity metrics between two resnet models.
 
-
 Provided functions
 - ``l2_distance(model_a, model_b, ...)``: returns SSE, L2, RMSE
 - ``cosine_similarity(...)``: returns cosine similarity between two models

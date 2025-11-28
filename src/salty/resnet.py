@@ -44,8 +44,11 @@ class BasicBlock(nn.Module):
                 nn.BatchNorm2d(out_channels * BasicBlock.expansion),
             )
 
+        self.out_relu = nn.ReLU(inplace=True)
+
     def forward(self, x):
-        return nn.ReLU(inplace=True)(self.residual_function(x) + self.shortcut(x))
+        out = self.residual_function(x) + self.shortcut(x)
+        return self.out_relu(out)
 
 
 class BottleNeck(nn.Module):
@@ -73,9 +76,11 @@ class BottleNeck(nn.Module):
                 nn.Conv2d(in_channels, out_channels * BottleNeck.expansion, stride=stride, kernel_size=1, bias=False),
                 nn.BatchNorm2d(out_channels * BottleNeck.expansion),
             )
+        self.out_relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        return nn.ReLU(inplace=True)(self.residual_function(x) + self.shortcut(x))
+        out = self.residual_function(x) + self.shortcut(x)
+        return self.out_relu(out)
 
 
 class ResNet(nn.Module):
