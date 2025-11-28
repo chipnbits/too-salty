@@ -44,8 +44,11 @@ class BasicBlock(nn.Module):
                 nn.BatchNorm2d(out_channels * BasicBlock.expansion),
             )
 
+        self.out_relu = nn.ReLU(inplace=True)
+
     def forward(self, x):
-        return nn.ReLU(inplace=True)(self.residual_function(x) + self.shortcut(x))
+        out = self.residual_function(x) + self.shortcut(x)
+        return self.out_relu(out)
 
 
 class BottleNeck(nn.Module):
@@ -73,9 +76,11 @@ class BottleNeck(nn.Module):
                 nn.Conv2d(in_channels, out_channels * BottleNeck.expansion, stride=stride, kernel_size=1, bias=False),
                 nn.BatchNorm2d(out_channels * BottleNeck.expansion),
             )
+        self.out_relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        return nn.ReLU(inplace=True)(self.residual_function(x) + self.shortcut(x))
+        out = self.residual_function(x) + self.shortcut(x)
+        return self.out_relu(out)
 
 
 class ResNet(nn.Module):
@@ -122,16 +127,19 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
-        output = self.conv1(x)
-        output = self.conv2_x(output)
-        output = self.conv3_x(output)
-        output = self.conv4_x(output)
-        output = self.conv5_x(output)
-        output = self.avg_pool(output)
-        output = output.view(output.size(0), -1)
-        output = self.fc(output)
+    def forward_features(self, x: torch.Tensor) -> torch.Tensor:
+        out = self.conv1(x)
+        out = self.conv2_x(out)
+        out = self.conv3_x(out)
+        out = self.conv4_x(out)
+        out = self.conv5_x(out)
+        out = self.avg_pool(out)
+        out = out.view(out.size(0), -1)
+        return out
 
+    def forward(self, x):
+        output = self.forward_features(x)
+        output = self.fc(output)
         return output
 
 

@@ -18,6 +18,7 @@ dependencies = [
     "pandas>=2.3.3",
     "pillow>=11.2.0",
     "python-dotenv>=1.0.0",
+    "rebasin>=0.0.47",
     "torch>=2.9.1",
     "torchvision>=0.24.1",
     "tqdm>=4.67.1",
@@ -84,6 +85,7 @@ dev = [
     "black>=24.0.0",
     "isort>=5.13.0",
     "pre-commit>=4.0.0",
+    "pytest>=9.0.1",
 ]
 
 
