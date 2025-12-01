@@ -105,8 +105,8 @@ def get_model_index_pairs(
     # List of all theoretical keys (e.g., "10_1", "10_2", ..., "300_4")
     all_possible_keys = [f"{e}_{m}" for e, m in itertools.product(epochs, model_ids)]
 
-    # All N choose 2 unique pairings from the theoretical keys
-    all_possible_key_pairs = list(itertools.combinations(all_possible_keys, 2))
+    # All possible pairs including self-pairings
+    all_possible_key_pairs = [(k1, k2) for k1 in all_possible_keys for k2 in all_possible_keys]
 
     # --- Step 3: Filter Available Pairs and Convert to Indices ---
     final_index_pairs: List[Tuple[int, int]] = []
@@ -341,33 +341,6 @@ def soup_rand_models(
     return final_df
 
 
-def reduce_to_severity_columns(df):
-    """
-    Collapse the long-form df (multiple rows per model) into
-    a single wide row per model:
-
-    clean_accuracy, severity_1, ..., severity_5
-    """
-    corr_cols = [c for c in df.columns if c.startswith("corr_")]
-
-    # Step 1 — Compute mean accuracy across all corruption types per severity
-    df["severity_mean"] = df[corr_cols].mean(axis=1)
-
-    # Step 2 — Pivot to get one column per severity
-    wide = df.pivot_table(
-        index=["model_id", "branch_epoch", "termination_epoch", "model_path", "clean_accuracy"],
-        columns="severity",
-        values="severity_mean",
-    ).reset_index()
-
-    # Rename severity columns → severity_1, severity_2, ...
-    wide.columns = ["model_id", "branch_epoch", "termination_epoch", "model_path", "clean_accuracy"] + [
-        f"severity_{int(c)}" for c in wide.columns[5:]
-    ]
-
-    return wide
-
-
 def gpu_worker_process(
     device_id: int,
     pairs_subset: List[Tuple[int, int]],
@@ -580,13 +553,12 @@ if __name__ == "__main__":
     result_naming = "rand_soups_seed_42"
     result_path = os.path.join(SOUP_DIR, f"{result_naming}.csv")
     # df = soup_rand_models(device="cuda:2", batch_size=1024, severities=severities,  seed=42, result_path=result_path)
-    df = soup_rand_models_parallel(
+    df = soup_rand_models(
         device="cuda",
         batch_size=1024,
         severities=severities,
         seed=42,
         result_path=result_path,
-        num_gpus=3,
     )
 
     # Paths
