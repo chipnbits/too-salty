@@ -2,51 +2,88 @@
 This file runs provides functions to run various experiments for the project.
 """
 
+import os
+from pathlib import Path
 from typing import Dict, Tuple
 from torch import Tensor
 import torch
 from torch.utils.data import DataLoader
 import pandas as pd
 
+from salty.models import get_resnet50_model
 from salty.similarity_metrics_from_logits import cka_similarity, logit_mse_kl
 from salty.similarity_metrics_from_models import cosine_similarity, l2_distance
 from salty.permute_model import permute_models
+from salty.utils import load_checkpoint
 from salty.datasets import get_cifar100_loaders
+
+MODEL_DIR = os.getenv("MODEL_DIR", "./models")
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+_MODEL_CACHE: list[torch.nn.Module] | None = None
+
+
+def _load_resnet_models() -> list[torch.nn.Module]:
+    global _MODEL_CACHE
+    if _MODEL_CACHE is not None:
+        return _MODEL_CACHE
+
+    model_paths = sorted(Path(MODEL_DIR).glob("**/*.pt"))
+    if not model_paths:
+        raise FileNotFoundError(f"No model checkpoints found in {MODEL_DIR}")
+
+    loaded_models: list[torch.nn.Module] = []
+    for path in model_paths:
+        model = get_resnet50_model(num_classes=100)
+        load_checkpoint(path, model)
+        model.to(DEVICE)
+        model.eval()
+        model.key = path.stem
+        model.name = path.name
+        loaded_models.append(model)
+
+    _MODEL_CACHE = loaded_models
+    return loaded_models
 
 # Experiment 1 - # Shared Epochs Already done!
 
 # Experiment 2 - Permutation Ablation
 
 
-def run_permutation_ablation_experiment(N=1000):
-    for i in range(N):
-        model_a, model_b = sample_model_pair()
+def run_permutation_ablation_experiment():
+    """
+    Clean acc and loss of all pairs of models after being permuted.
+    """
+    model_pairs = []
+    for model_a, model_b in range(model_pairs):
         permuted_model_b = permute_models(model_a, model_b)
         # Run souping experiment with model_a and permuted_model_b
+    # Collect and save results
 
 
 # Experiment 3 - Predicting Soupability
 
 
 def record_logits_features(dataloader: DataLoader) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
-    models = []
+    models = _load_resnet_models()
     logits = {}
     penultimate_activations = {}
     for model in models:
         model_logits = []
         model_penultimate = []
         for inputs, _ in dataloader:
+            inputs = inputs.to(DEVICE, non_blocking=True)
             with torch.no_grad():
-                outputs, penultimate = model(inputs)
-            model_logits.append(outputs)
-            model_penultimate.append(penultimate)
+                penultimate = model.forward_features(inputs)
+                outputs = model.fc(penultimate)
+            model_logits.append(outputs.cpu())
+            model_penultimate.append(penultimate.cpu())
         logits[model.key] = torch.cat(model_logits, dim=0)
         penultimate_activations[model.key] = torch.cat(model_penultimate, dim=0)
     return logits, penultimate_activations
 
 
 def record_similarity_metrics(logits: Dict[str, Tensor], penultimate_activations: Dict[str, Tensor]) -> None:
-    models = []
+    models = _load_resnet_models()
     rows = []
     for i in range(len(models)):
         for j in range(i + 1, len(models)):
@@ -64,8 +101,8 @@ def record_similarity_metrics(logits: Dict[str, Tensor], penultimate_activations
             kl_logits = mse_kl["kl"]
             cka_features = cka_similarity(features_model_a, features_model_b)
             row = {
-                "model_a": model_a.name,
-                "model_b": model_b.name,
+                "model_a": model_a.key,
+                "model_b": model_b.key,
                 "l2_distance": l2,
                 "cosine_similarity": cosine,
                 "cka_logits": cka_logits,
