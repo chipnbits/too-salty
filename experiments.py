@@ -84,8 +84,4 @@ def run_soupability_prediction_experiment():
     record_similarity_metrics(logits, features)
 
 
-# Experiment 4 - Transitivity Prediction
-
-
-def run_transitivity_prediction_experiment(data):
-    pass
+# Experiment 4 - Transitivity Prediction - Also already done !
