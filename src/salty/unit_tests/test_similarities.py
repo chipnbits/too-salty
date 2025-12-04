@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import pytest
 
 from salty.resnet import resnet18, resnet50
-from salty.similarity_metrics import (
+from salty.similarity_metrics_from_models import (
     l2_distance,
     cosine_similarity,
     probe_set_similarities,
