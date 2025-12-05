@@ -1,0 +1,43 @@
+figure.figsize: 4, 3
+figure.dpi: 300
+
+# grid on, but underneath everything
+axes.grid: True
+axes.axisbelow: True
+
+# hide top/right spines
+axes.spines.top:    False
+axes.spines.right:  False
+
+# prefer round numbers for limits
+axes.autolimit_mode: round_numbers
+
+# thinner lines
+axes.linewidth: 0.5
+grid.linewidth: 0.5
+xtick.major.width: 0.5
+ytick.major.width: 0.5
+
+# closer tick labels
+xtick.major.pad: 2.5     # distance to major tick label in points
+ytick.major.pad: 2.5     # distance to major tick label in points
+
+# color tweaks
+axes.edgecolor:  (0.10, 0.10, 0.10)
+axes.labelcolor: (0.10, 0.10, 0.10)
+xtick.color:     (0.10, 0.10, 0.10)
+ytick.color:     (0.10, 0.10, 0.10)
+axes.facecolor:  (1, 0.98, 0.98)
+# figure.facecolor: (1, 0.99, 0.96)
+
+# fonts: prefer Open Sans, then original matplotlib list
+font.sans-serif: Open Sans, Helvetica, DejaVu Sans, Bitstream Vera Sans, Computer Modern Sans Serif, Lucida Grande, Verdana, Lucid, Arial, Helvetica, Avant Garde, sans-serif
+font.weight: 100
+font.size:   7
+
+# savefig options
+savefig.bbox: tight
+
+# TODO: other ideas...
+# axes.labelsize: small
+# hist.bins: auto
