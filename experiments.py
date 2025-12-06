@@ -4,6 +4,7 @@ This file runs provides functions to run various experiments for the project, ba
 
 import itertools
 import os
+import pickle
 from pathlib import Path
 from typing import Dict, List, Pattern, Tuple
 
@@ -253,11 +254,10 @@ class ModelManager:
         return index_pairs
 
 
-# Experiment 1 - # Shared Epochs Already done!
+# Experiment 1 - # Shared Epochs Already done! (messy versuion in evaluate.py file)
+
 
 # Experiment 2 - Permutation Ablation
-
-
 def run_permutation_ablation_experiment(
     mm: ModelManager,  # Use Any or the actual type ModelManager
     model_pairs: List[Tuple[int, int]],
@@ -305,13 +305,16 @@ def run_permutation_ablation_experiment(
 
         # Permute and Soup
         permuted_model_b = permute_models(model_a, model_b)
-        model_soup = soup_models(model_a, model_b)
+        model_soup = soup_models(model_a, permuted_model_b, alpha=0.5)
 
         acc, loss = evaluate_model(
             model=model_soup,
             dataloader=dataloader_cifar100_test,
             device=mm.device,  # Use mm.device for consistency
         )
+
+        if key_a > key_b:
+            key_a, key_b = key_b, key_a
 
         new_row = {
             "key_a": key_a,
@@ -340,6 +343,9 @@ def run_permutation_ablation_experiment(
 
 
 def record_logits_features(mm: ModelManager, dataloader: DataLoader) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
+    """
+    Record logits and penultimate activations for all models in the ModelManager on the given dataloader by key.
+    """
 
     logits = {}
     penultimate_activations = {}
@@ -358,8 +364,26 @@ def record_logits_features(mm: ModelManager, dataloader: DataLoader) -> Tuple[Di
     return logits, penultimate_activations
 
 
+def pickle_logits_features(
+    logits: Dict[str, Tensor], penultimate_activations: Dict[str, Tensor], filename: str
+) -> None:
+    with open(filename, "wb") as f:
+        pickle.dump({"logits": logits, "penultimate_activations": penultimate_activations}, f)
+    print(f"Saved logits and penultimate activations to {filename}")
+
+
+def load_pickled_logits_features(filename: str) -> Tuple[Dict[str, Tensor], Dict[str, Tensor]]:
+    with open(filename, "rb") as f:
+        data = pickle.load(f)
+    print(f"Loaded logits and penultimate activations from {filename}")
+    return data["logits"], data["penultimate_activations"]
+
+
 def record_similarity_metrics(
-    mm: ModelManager, logits: Dict[str, Tensor], penultimate_activations: Dict[str, Tensor]
+    mm: ModelManager,
+    logits: Dict[str, Tensor],
+    penultimate_activations: Dict[str, Tensor],
+    csv_output: str = "similarity_metrics.csv",
 ) -> None:
     rows = []
     for i in range(len(mm)):
@@ -377,9 +401,15 @@ def record_similarity_metrics(
             mse_logits = mse_kl["mse"]
             kl_logits = mse_kl["kl"]
             cka_features = cka_similarity(features_model_a, features_model_b)
+
+            # Cannonical order for keys
+            key_a, key_b = model_a.key, model_b.key
+            if key_a > key_b:
+                key_a, key_b = key_b, key_a
+
             row = {
-                "model_a": model_a.key,
-                "model_b": model_b.key,
+                "key_a": key_a,
+                "key_b": key_b,
                 "l2_distance": l2,
                 "cosine_similarity": cosine,
                 "cka_logits": cka_logits,
@@ -387,15 +417,13 @@ def record_similarity_metrics(
                 "kl_logits": kl_logits,
                 "cka_features": cka_features,
             }
+            print(f"Recorded similarity for pair: {key_a} + {key_b}")
             rows.append(row)
+
     df = pd.DataFrame(rows)
-    df.to_csv("similarity_metrics.csv", index=False)
-
-
-def run_soupability_prediction_experiment():
-    _, _, test_loader = get_cifar100_loaders()
-    logits, features = record_logits_features(test_loader)
-    record_similarity_metrics(logits, features)
+    df.to_csv(csv_output, index=False)
+    parquet_output = csv_output.replace(".csv", ".parquet")
+    df.to_parquet(parquet_output, index=False)
 
 
 # Experiment 4 - Transitivity Prediction - Also already done !
@@ -409,6 +437,27 @@ if __name__ == "__main__":
         unique=True,
     )
     print(f"Total unique model pairs: {len(index_pairs)}")
-    run_permutation_ablation_experiment(mm, index_pairs, output_csv="permutation_ablation_results.csv")
 
+    experiments_to_run = [2]  # Specify which experiments to run
+
+    # Experiment 2 - Permutation Ablation
+    if 2 in experiments_to_run:
+        run_permutation_ablation_experiment(mm, index_pairs, output_csv="permutation_ablation_results.csv")
+
+    # Experiment 3 - Predicting Soupability
+    if 3 in experiments_to_run:
+        save_logits_features_path = "logits_penultimate_activations.pkl"
+        if not os.path.exists(save_logits_features_path):
+            _, _, test_loader = get_cifar100_loaders()
+            logits, penultimate_activations = record_logits_features(mm, test_loader)
+            pickle_logits_features(logits, penultimate_activations, save_logits_features_path)
+        else:
+            logits, penultimate_activations = load_pickled_logits_features(save_logits_features_path)
+
+        record_similarity_metrics(
+            mm,
+            logits,
+            penultimate_activations,
+            csv_output="similarity_metrics.csv",
+        )
     # compare to rows in
