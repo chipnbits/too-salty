@@ -38,3 +38,5 @@ logs/
 #Wandb
 wandb/
 */wandb/
+
+.pdf
