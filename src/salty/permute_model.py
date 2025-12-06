@@ -95,7 +95,9 @@ def permute_models(a: ResNet, b: ResNet) -> ResNet:
     a_work, b_work, dummy_input = _prepare_models(a, b)
 
     # Run permutation coordinate descent to align b_work with a_work
-    pcd = PermutationCoordinateDescent(a_work, b_work, dummy_input)
+    pcd = PermutationCoordinateDescent(
+        a_work, b_work, dummy_input, device_a=_get_device(a_work), device_b=_get_device(b_work)
+    )
     pcd.rebasin()  # mutates b_work in place
 
     # Move the permuted copy back to the original device of b
