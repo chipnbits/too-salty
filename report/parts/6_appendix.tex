@@ -4,3 +4,80 @@
 \section{Appendix}
 
 Anything else?
+
+\subsection{Training Parameters for CIFAR-100 with ResNet-50}
+\begin{table}[t]
+\centering
+\caption{Training hyperparameters for CIFAR-100 with ResNet-50.}
+\label{tab:hyperparams_baseline}
+\begin{tabular}{lll}
+\toprule
+Component & Hyperparameter & Value \\
+\midrule
+Dataset 
+& Dataset             & CIFAR-100 \\
+& \# Classes          & 100 \\
+& Data augmentation   & Mirroring and Padded Offset \\
+& Validation split    & 5\% of training set \\
+& Split seed          & 42 \\
+\midrule
+Model 
+& Architecture        & ResNet-50 \\
+& Pretrained          & No (from scratch) \\
+\midrule
+Optimization 
+& Optimizer           & SGD (Nesterov) \\
+& Initial learning rate & 0.1 \\
+& Momentum            & 0.9 \\
+& Weight decay        & $5 \times 10^{-4}$ \\
+\midrule
+Learning rate schedule
+& Scheduler           & CosineAnnealingLR \\
+& $T_{\max}$          & 280 epochs \\
+& $\eta_{\min}$       & 0 \\
+\midrule
+Training 
+& Epochs              & 300 \\
+& Batch size          & 128 \\
+& Mixed precision     & No \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% Model 4
+% LR scale: 0.5373375970039733
+% momentum scale: 0.8593753558069187
+% weight decay scale: 0.9078390214237956
+
+% Model 2
+% LR scale: 1.2243734389696643
+% momentum scale: 0.9247063988876808
+% weight decay scale: 1.1149574690169013
+
+% Model 3
+% LR scale: 0.511209360224139
+% momentum scale: 1.0694829466942788
+% weight decay scale: 1.1098937205919557
+
+% Model 1
+% LR scale: 0.7072871250784821
+% momentum scale: 1.1009119841571535
+% weight decay scale: 0.828417126581002
+
+\begin{table}[t]
+\centering
+\caption{Optimizer perturbation scales applied during finetuning from the baseline ResNet-50 checkpoint on CIFAR-100. Each model scales the original SGD hyperparameters multiplicatively.}
+\label{tab:optimizer_perturbations}
+\begin{tabular}{lccc}
+\toprule
+Model & Learning Rate Scale & Momentum Scale & Weight Decay Scale \\
+\midrule
+Model 1 & 0.7073 & 1.1009 & 0.8284 \\
+Model 2 & 1.2244 & 0.9247 & 1.1150 \\
+Model 3 & 0.5112 & 1.0695 & 1.1099 \\
+Model 4 & 0.5373 & 0.8594 & 0.9078 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% Original run at https://wandb.ai/sghyseli/cifar100-resnet50/runs/7vu6zu3x?nw=nwusersghyseli
