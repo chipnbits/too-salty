@@ -20,6 +20,7 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "rebasin>=0.0.47",
     "seaborn>=0.13.2",
+    "scikit-learn>=1.7.2",
     "torch>=2.9.1",
     "torchvision>=0.24.1",
     "tqdm>=4.67.1",
