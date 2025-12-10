@@ -8,7 +8,7 @@ The optimizer learning rate, momentum, and weight decay values are scaled by a r
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\linewidth]{report/figures/branching_models.drawio.pdf}
+    \includegraphics[width=\linewidth]{./figures/branching_models.drawio.pdf}
     \caption{Branching of fine-tuned models from baseline checkpoints.}
     \label{fig:evolution}
 \end{figure}
@@ -17,10 +17,16 @@ A total of $4$ variants and $26$ branch points were trained, yielding $104$ rela
 
 
 % How were the models souped (50/50 mix) (git rebasin tended to have this be the optimal point) then we check the clean and corrupted performance against the model A and model B. Similiarity metrics between all models gathered. Permutation tests are done only on clean accuraccy
+
+\subsection{Shared Epoch}
+
+\subsection{Permutation Alignment}
+
 \subsection{Predicting Soupability}
 What experiments did we run to test our ability to predict soupability? How well did we do? What correlates/doesn't? Is there stuff that's cool to put in the appendix?
 
+\subsection{Is Souping Transitive?}
+
 What about predicting soupability of $A$ to $C$ given the soupability of $A$ to $B$ and $B$ to $C$?
 
-\subsection{Validating the Theory}
-What experiments did we run to validate our theory of souping? Do we get the noise reduction we expect? 
+\subsection{Corrupted Data}
