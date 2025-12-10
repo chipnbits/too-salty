@@ -11,7 +11,7 @@ def get_models_and_soups_df(path: Optional[str] = None) -> Tuple[pd.DataFrame, p
         Tuple[pd.DataFrame, pd.DataFrame]: A tuple containing the soups dataframe and the models dataframe.
     """
     if path is None:
-        path = "../models/soup_models/rand_soups_seed_42.parquet"
+        path = "../analysis/combined_analysis.parquet"
     df = pd.read_parquet(path)
     df.rename(columns={"acc_corr_3": "corrupted_accuracy", "loss_corr_3": "corrupted_loss"}, inplace=True)
 
@@ -28,11 +28,19 @@ def get_models_and_soups_df(path: Optional[str] = None) -> Tuple[pd.DataFrame, p
     soups["shared_epochs"] = soups[["epoch_a", "epoch_b"]].min(axis=1)
 
     soups = soups.merge(
-        models_df[["key", "clean_loss", "clean_accuracy"]].rename(
+        models_df[
+            [
+                "key",
+                "clean_loss",
+                "clean_accuracy",
+                "corrupted_loss",
+            ]
+        ].rename(
             columns={
                 "key": "key_a",
                 "clean_loss": "clean_loss_a",
                 "clean_accuracy": "clean_accuracy_a",
+                "corrupted_loss": "corrupted_loss_a",
             }
         ),
         on="key_a",
@@ -40,11 +48,12 @@ def get_models_and_soups_df(path: Optional[str] = None) -> Tuple[pd.DataFrame, p
     )
 
     soups = soups.merge(
-        models_df[["key", "clean_loss", "clean_accuracy"]].rename(
+        models_df[["key", "clean_loss", "clean_accuracy", "corrupted_loss"]].rename(
             columns={
                 "key": "key_b",
                 "clean_loss": "clean_loss_b",
                 "clean_accuracy": "clean_accuracy_b",
+                "corrupted_loss": "corrupted_loss_b",
             }
         ),
         on="key_b",
@@ -53,5 +62,39 @@ def get_models_and_soups_df(path: Optional[str] = None) -> Tuple[pd.DataFrame, p
 
     # Souping gain in loss: min(L(A), L(B)) - L(soup)
     soups["soup_gain"] = soups[["clean_loss_a", "clean_loss_b"]].min(axis=1) - soups["clean_loss"]
+    soups["permutated_gain"] = soups[["clean_loss_a", "clean_loss_b"]].min(axis=1) - soups["clean_loss_permuted"]
+    soups["corrupted_gain"] = soups[["corrupted_loss_a", "corrupted_loss_b"]].min(axis=1) - soups["corrupted_loss"]
 
+    soups = soups[
+        [
+            "key_a",
+            "key_b",
+            "epoch_a",
+            "variant_a",
+            "epoch_b",
+            "variant_b",
+            "shared_epochs",
+            "clean_accuracy",
+            "clean_loss",
+            "corrupted_accuracy",
+            "corrupted_loss",
+            "clean_accuracy_permuted",
+            "clean_loss_permuted",
+            "l2_distance",
+            "cosine_similarity",
+            "cka_logits",
+            "mse_logits",
+            "kl_logits",
+            "cka_features",
+            "clean_loss_a",
+            "clean_accuracy_a",
+            "clean_loss_b",
+            "clean_accuracy_b",
+            "corrupted_loss_a",
+            "corrupted_loss_b",
+            "soup_gain",
+            "permutated_gain",
+            "corrupted_gain",
+        ]
+    ]
     return soups, models_df
