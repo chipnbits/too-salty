@@ -1,0 +1,26 @@
+\section{Experiments}
+\subsection{Method}
+Souping is most commonly used in the setting where a pre-trained model is fine tuned to a similar but new objective from the original training. The choice of hyper-parameters and the order in which the training data is batch sampled affects the training path through the loss landscape, leading to multiple training trajectories from a single common ancestor, the pre-trained model. Our experiments are designed to recreate this evolutionary branching effect, but with a wider spectrum of model diversity and shared training epochs than a single pre-trained model would provide.
+
+We train a baseline model for image classification on the CIFAR-100 dataset with ResNet-50 \cite{resnet50} using a well established set of hyperparameters \cite{cifar100params} with image reflection and random translation with padding for data augmentation. We hold out $5\%$ of the 50,000 training images as a validation set, as well as 10,000 images for testing. The baseline model is saved at 10 epoch intervals, serving as the branch points for the following optimizer perturbations.
+
+The optimizer learning rate, momentum, and weight decay values are scaled by a randomly chosen value within a range for more details, see Appendix tables \ref{tab:hyperparams_baseline} and \ref{tab:optimizer_perturbations}. The perturbed models are each trained to convergence, with the best validation scored model weights saved for the experiments.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{./figures/branching_models.drawio.pdf}
+    \caption{Branching of fine-tuned models from baseline checkpoints.}
+    \label{fig:evolution}
+\end{figure}
+
+A total of $4$ variants and $26$ branch points were trained, yielding $104$ related models with $5,346$ binary souping combinations for analysis.
+
+
+% How were the models souped (50/50 mix) (git rebasin tended to have this be the optimal point) then we check the clean and corrupted performance against the model A and model B. Similiarity metrics between all models gathered. Permutation tests are done only on clean accuraccy
+\subsection{Predicting Soupability}
+What experiments did we run to test our ability to predict soupability? How well did we do? What correlates/doesn't? Is there stuff that's cool to put in the appendix?
+
+What about predicting soupability of $A$ to $C$ given the soupability of $A$ to $B$ and $B$ to $C$?
+
+\subsection{Validating the Theory}
+What experiments did we run to validate our theory of souping? Do we get the noise reduction we expect? 
