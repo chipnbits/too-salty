@@ -52,7 +52,7 @@ We find that all metrics perform similarly. A plot for all metrics can be found 
 
 \subsection{Is Souping Transitive?}
 
-If model $A$ soups successfully with models $B$ and $C$, will $B$ and $C$ also soup successfully? If it is true that models soups together when they lie in the same low loss region, then transitivity holds. To test this, we consider all triplets of models $(A, B, C)$. We plot the probability that $B$ and $C$ soup against the number of positive soups involving $A$ in Figure~\ref{fig:transitivity}. We observe a strong positive correlation, with the probability that $B$ and $C$ soup increasing as the number of positive soups involving $A$ increases. This suggests that souping is approximately transitive.
+If model $A$ soups successfully with models $B$ and $C$, will $B$ and $C$ also soup successfully? If it is true that models soups together when they lie in the same low loss region, then transitivity holds. To test this, we consider all triplets of models $(A, B, C)$. We plot the probability that $B$ and $C$ soup against the number of positive soups involving $A$ in Figure~\ref{fig:transitivity}. We observe that the probability that $B$ and $C$ soup is only high when $A$ soups with both $B$ and $C$. This suggests that souping is approximately transitive.
 
 \begin{figure}[ht]
   \centering
@@ -64,6 +64,7 @@ If model $A$ soups successfully with models $B$ and $C$, will $B$ and $C$ also s
 
 We also plot the soup gain between $B$ and $C$ against the minimum soup gain of $(A, B)$ and $(A, C)$ in Figure~\ref{fig:transitivity_min}, noting a moderate positive Spearman correlation of 0.64, further supporting the hypothesis.
 
+Following transitivity, we investigate whether there are clusters of models that soup well together. We embed our models into 2-dimensions based on soup gain and plot them in Figure~\ref{fig:model_embedding}. The details of generating this plot can be found in Section~\ref{sec:model_embedding_creation}. We find that most successful soups lie in a single cluster of models all branched from later on in the training procedure.
 
 \begin{figure}[ht]
   \centering
@@ -85,6 +86,6 @@ All experiments thus far have measured soup gain on a held-out test set. However
   }\label{fig:test_vs_corrupted_pos}
 \end{figure}
 
-We also plot the probability of positive soup gain on corrupted data as a function of shared epochs in Figure~\ref{fig:soup_corrupted_positive_gain_prob}. The probability of positive gain increases with the number of shared epochs, for both clean and corrupted data, however, the corrupted data consistently has a slightly lower probability of positive gain.
+We also plot the probability of positive soup gain on corrupted data as a function of shared epochs in Figure~\ref{fig:soup_corrupted_positive_gain_prob}. The probability of positive gain increases with the number of shared epochs, for both clean and corrupted data. However, the corrupted data consistently has a slightly lower probability of positive gain.
 
-We test whether souping can help reduce the \emph{robustness gap}, the gap between the test set and corrupted set loss. A mean and median difference in robustness gap before and after souping of approximately, with a plot of the CDF shown in Figure~\ref{fig:soup_robustness_cdf}. We conclude that souping does not reduce the robustness gap.
+Finally, we test whether souping can help reduce the \emph{robustness gap}, the gap between the test set and corrupted set loss. A mean and median difference in robustness gap before and after souping of approximately, with the CDF plotted in Figure~\ref{fig:soup_robustness_cdf}. We conclude that souping does not reduce the robustness gap.

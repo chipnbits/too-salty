@@ -146,3 +146,8 @@ Training
     \label{fig:soup_robustness_cdf}
 \end{figure}
 
+\subsection{Details for Model Embedding Creation}\label{sec:model_embedding_creation}
+
+Given our evidence for transitivity, we consider the broader landscape of all $104$ of our originally trained models. Do the soups all exist in separate clusters of models in separate loss basins? We define a distance metric defined as \[d_{AB} = -\operatorname{sign}(\text{soup gain}) - 0.1 * \text{soup gain}\] 
+
+where $d_{AB}$ is the distance between models $A$ and $B$. Intuitively, this metric puts models close together that soup together positively, taking into account the magnitude of soup gain. We then cast this down into a 2-dimensional embedding using Multidimensional Scaling. We also color by branching epoch and mark edges that represent successful soups. The resulting plot is shown in Figure~\ref{fig:model_embedding}. 
