@@ -428,6 +428,56 @@ def record_similarity_metrics(
 
 # Experiment 4 - Transitivity Prediction - Also already done !
 
+
+# Experiment 5 - Comparison of angle metric from the last shared checkpoint
+def record_deviation_metrics(
+    mm: ModelManager,
+    csv_output: str = "angle_change_metrics.csv",
+) -> None:
+    rows = []
+    for i in range(len(mm)):
+        for j in range(i + 1, len(mm)):
+            model_a = mm[i]
+            model_b = mm[j]
+
+            model_ancestor_epoch = min(model_a.epoch, model_b.epoch)
+            path = os.path.join(
+                MODEL_DIR, f"cifar100-resnet50/baseline-resnet50/baseline-resnet50-epoch_{model_ancestor_epoch}.pt"
+            )
+
+            model_ancestor = get_resnet50_model(num_classes=100)
+            load_checkpoint(path, model_ancestor)
+            model_ancestor.eval()
+            model_ancestor.to(mm.device)
+
+            # Will give 2x the difference of model_a from the ancestor
+            model_a_diff = soup_models(model_ancestor, model_a, alpha=-1.0)
+            model_b_diff = soup_models(model_ancestor, model_b, alpha=-1.0)
+
+            # rescale by 0.5 to get the actual difference
+            l2 = l2_distance(model_a, model_b)["l2"] / 2.0
+            cosine = cosine_similarity(model_a, model_b)
+
+            # Cannonical order for keys
+            key_a, key_b = model_a.key, model_b.key
+            if key_a > key_b:
+                key_a, key_b = key_b, key_a
+
+            row = {
+                "key_a": key_a,
+                "key_b": key_b,
+                "l2_distance": l2,
+                "cosine_similarity": cosine,
+            }
+            print(f"Recorded similarity for pair: {key_a} + {key_b}")
+            rows.append(row)
+
+    df = pd.DataFrame(rows)
+    df.to_csv(csv_output, index=False)
+    parquet_output = csv_output.replace(".csv", ".parquet")
+    df.to_parquet(parquet_output, index=False)
+
+
 if __name__ == "__main__":
     mm = ModelManager(model_dir=SOUP_DIR, pattern=fine_tuned_pattern, device=DEVICE)
     # Example usage of get_index_pairs
@@ -438,7 +488,7 @@ if __name__ == "__main__":
     )
     print(f"Total unique model pairs: {len(index_pairs)}")
 
-    experiments_to_run = [2]  # Specify which experiments to run
+    experiments_to_run = [5]  # Specify which experiments to run
 
     # Experiment 2 - Permutation Ablation
     if 2 in experiments_to_run:
@@ -460,4 +510,9 @@ if __name__ == "__main__":
             penultimate_activations,
             csv_output="similarity_metrics.csv",
         )
-    # compare to rows in
+
+    if 5 in experiments_to_run:
+        record_deviation_metrics(
+            mm,
+            csv_output="angle_change_metrics.csv",
+        )
