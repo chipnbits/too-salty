@@ -88,4 +88,4 @@ All experiments thus far have measured soup gain on a held-out test set. However
 
 We also plot the probability of positive soup gain on corrupted data as a function of shared epochs in Figure~\ref{fig:soup_corrupted_positive_gain_prob}. The probability of positive gain increases with the number of shared epochs, for both clean and corrupted data. However, the corrupted data consistently has a slightly lower probability of positive gain.
 
-Finally, we test whether souping can help reduce the \emph{robustness gap}, the gap between the test set and corrupted set loss. A mean and median difference in robustness gap before and after souping of approximately, with the CDF plotted in Figure~\ref{fig:soup_robustness_cdf}. We conclude that souping does not reduce the robustness gap.
+ We test whether souping can help reduce the gap between the test set and corrupted set loss, or \emph{robustness gap}. The mean and median difference in robustness gap before and after souping is approximately 0, indicating that souping does not improve this gap, see the CDF plotted in Figure~\ref{fig:soup_robustness_cdf}.

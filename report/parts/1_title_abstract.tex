@@ -1,7 +1,7 @@
 
 % Title
 \twocolumn[
-\icmltitle{Too Salty: On Model Soups}
+\icmltitle{When is Model Souping Effective? Similarity, Transitivity, and Robustness}
 
 \icmlsetsymbol{equal}{*}
 
@@ -25,5 +25,5 @@ Code available at \url{https://github.com/yourname/modelsoups}
 ]
 
 \begin{abstract}
-    Model souping is a technique in which the parameters of models are averaged, often leading to improved performance over the constituent models, without increasing inference cost. However, little is understood about how souping works and when it is most effective. We present a series of experiments on over 5,000 binary Res-Net-50 soups trained on CIFAR-100 for image classification. We find that souped models must be similar enough to avoid model collapse, but dissimilar enough to yield meaningful improvements. We also find that souping is mostly transitive, supporting the hypothesis that souping works by averaging within low-loss basins. Finally, we observe that soup gains on corrupted data are correlated with those on in-distribution data. Our findings provide insight into the mechanisms behind souping and offer practical advice for its application. Code and experiments are available at: \url{https://github.com/chipnbits/too-salty}.
+Model souping is a technique in which the parameters of models are averaged, often leading to improved performance over constituent models without increasing inference cost. However, the specific conditions required for success are not well understood, particularly regarding the trade-off between model diversity and stability. We present a series of experiments on over 5,000 binary ResNet-50 soups trained on CIFAR-100, where we systematically vary the number of shared training epochs to control trajectory divergence. We find that effective souping requires a specific balance: models must be similar enough to avoid model collapse, but dissimilar enough to yield meaningful improvements. We also find that souping is largely transitive, providing empirical support for the hypothesis that souping works by averaging within connected low-loss basins. Finally, we observe that soup gains on corrupted data are strongly correlated with those on in-distribution data. Our findings provide insight into the mechanisms behind souping and offer practical advice for selecting model ingredients. Code and experiments are available at: \url{https://github.com/chipnbits/too-salty}.
 \end{abstract}
