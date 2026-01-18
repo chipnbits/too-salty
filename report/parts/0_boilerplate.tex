@@ -1,53 +1,45 @@
+% ==========================================
+% USER PACKAGES
+% ==========================================
 \usepackage{microtype}
 \usepackage{graphicx}
-% \usepackage{subfigure}
 \usepackage{booktabs}
-\usepackage{hyperref}
-
-\usepackage[accepted]{icml2025}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{mathtools}
-\usepackage{amsthm}
 \usepackage{outlines}
-\usepackage{subcaption}
-
-% \usepackage[capitalize,noabbrev]{cleveref}
+\usepackage{subcaption} % Replaces subfigure
 \usepackage{tikz}
 \usetikzlibrary{calc}
 
-% Theorems
+% Math Packages
+\usepackage{amsmath}
+% \let\Bbbk\relax
+% \usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+
+% ==========================================
+% THEOREMS & DEFINITIONS
+% ==========================================
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{corollary}[theorem]{Corollary}
+
 \theoremstyle{definition}
 \newtheorem{definition}[theorem]{Definition}
 \newtheorem{assumption}[theorem]{Assumption}
+
 \theoremstyle{remark}
 \newtheorem{remark}[theorem]{Remark}
-\usepackage[textsize=tiny]{todonotes}
 
-% Comments and Colours
-\definecolor{darkred}{rgb}{0.7,0,0}
-\definecolor{purple}{rgb}{0.5,0,0.5}
+% ==========================================
+% SPACING TWEAKS (Enabled for 4-page limit)
+% ==========================================
 
-\newcommand{\pierre}[1]    {\kibitz{purple}{\bf\noindent[Pierre: #1]}}
-\newcommand{\simon}[1]    {\kibitz{darkred}{\bf\noindent[Pierre: #1]}}
+% \setlength{\textfloatsep}{10pt plus 2pt minus 4pt}  % Space between floats and text
+% \setlength{\floatsep}{10pt plus 2pt minus 4pt}      % Space between floats
+% \setlength{\intextsep}{10pt plus 2pt minus 4pt}     % Space above/below in-text floats
 
-% % =========================
-% % TIGHTENING SPACING
-% % (Put these AFTER icml2025)
-% % =========================
-
-% % Slightly reduce space around floats (figures/tables)
-% \setlength{\textfloatsep}{8pt plus 2pt minus 4pt}  % space between floats and text
-% \setlength{\floatsep}{8pt plus 2pt minus 4pt}      % space between floats
-% \setlength{\intextsep}{8pt plus 2pt minus 4pt}     % space above/below in-text floats
-
-% % Slightly reduce space around displayed equations
-% \setlength{\abovedisplayskip}{6pt plus 2pt minus 4pt}
-% \setlength{\belowdisplayskip}{6pt plus 2pt minus 4pt}
-% \setlength{\abovedisplayshortskip}{0pt plus 2pt}
-% \setlength{\belowdisplayshortskip}{4pt plus 2pt minus 4pt}
+% % Displayed equations spacing
+% \setlength{\abovedisplayskip}{5pt plus 2pt minus 3pt}
+% \setlength{\belowdisplayskip}{5pt plus 2pt minus 3pt}
