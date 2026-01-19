@@ -1,7 +1,26 @@
-\documentclass{article}
-\input{parts/0_boilerplate}
+\documentclass[sigplan,anonymous,nonacm]{acmart}
+% Options explained:
+% sigplan   : 2-column layout conforming to requirements
+% anonymous : Anonymizes author block
+% nonacm    : Removes the standard ACM copyright statement text
+% acmthm=false : VITAL. Disables ACM theorems so you can use your own amsthm block below.
 
-% Document
+% --- CSSRC/Workshop booklet specifics: no ACM rights/footer, no ref strip, no page numbers ---
+\settopmatter{printacmref=false, printfolios=false}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\setcopyright{none}
+
+% Clear ACM metadata (prevents stray conference/ISBN/DOI blocks)
+\acmDOI{}
+\acmISBN{}
+\acmConference{}{}{}
+\acmBooktitle{}
+\acmYear{}
+
+\input{parts/0_boilerplate}
+% ==========================================
+% DOCUMENT START
+% ==========================================
 \begin{document}
 
 \input{parts/1_title_abstract}
@@ -9,9 +28,11 @@
 \input{parts/3_experiments}
 \input{parts/4_conclusion}
 
-% Bibliography
-\bibliography{references}
-\bibliographystyle{icml2025}
+% ==========================================
+% BIBLIOGRAPHY
+% ==========================================
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references} % Ensure you have a references.bib file
 
 % Appendix
 \input{parts/5_appendix}
