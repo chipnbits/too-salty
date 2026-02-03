@@ -2,16 +2,14 @@ import argparse
 import os
 import random
 from copy import deepcopy
-from pathlib import Path
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import yaml
 from dotenv import load_dotenv
 from torch.optim.lr_scheduler import MultiStepLR
-from torch.utils.data import DataLoader
-from torchvision import models
+from torch.optim.swa_utils import AveragedModel, SWALR, get_ema_multi_avg_fn, update_bn
 from tqdm import tqdm
 
 import wandb
@@ -45,6 +43,10 @@ def train_loop(
     best_val_acc=None,
     scaler=None,
     global_step=0,
+    ema_model=None,
+    swa_model=None,
+    swa_scheduler=None,
+    swa_start=None,
 ):
     num_epochs = cfg["training"]["epochs"]
     val_interval = cfg["logging"]["val_interval"]
@@ -54,6 +56,9 @@ def train_loop(
     os.makedirs(save_dir, exist_ok=True)
 
     for epoch in range(start_epoch, num_epochs):
+        # Determine if we're in SWA phase
+        in_swa_phase = swa_model is not None and swa_start is not None and epoch >= swa_start
+
         # train for one epoch
         train_loss, train_acc, global_step = train_one_epoch(
             model,
@@ -65,7 +70,12 @@ def train_loop(
             cfg,
             scaler=scaler,
             global_step=global_step,
+            ema_model=ema_model,
         )
+
+        # Update SWA model at end of epoch (only in SWA phase)
+        if in_swa_phase:
+            swa_model.update_parameters(model)
 
         # validate every val_interval epochs
         if (epoch + 1) % val_interval == 0:
@@ -80,7 +90,9 @@ def train_loop(
             val_loss, val_acc = None, None
 
         # Step the scheduler each epoch
-        if scheduler is not None:
+        if in_swa_phase and swa_scheduler is not None:
+            swa_scheduler.step()
+        elif scheduler is not None:
             scheduler.step()
 
         # Epoch-level logging to wandb
@@ -144,6 +156,36 @@ def train_loop(
             )
             print(f"New best model saved with val_acc: {best_val_acc:.2f}%")
 
+    # After training completes, update BN stats and save averaged models
+    if ema_model is not None:
+        print("Updating batch normalization statistics for EMA model...")
+        update_bn(train_loader, ema_model, device=device)
+        ema_model_path = os.path.join(save_dir, "ema_model.pt")
+        torch.save({"model_state": ema_model.module.state_dict(), "config": cfg}, ema_model_path)
+        print(f"Saved EMA model: {ema_model_path}")
+
+    if swa_model is not None:
+        print("Updating batch normalization statistics for SWA model...")
+        update_bn(train_loader, swa_model, device=device)
+        swa_model_path = os.path.join(save_dir, "swa_model.pt")
+        torch.save({"model_state": swa_model.module.state_dict(), "config": cfg}, swa_model_path)
+        print(f"Saved SWA model: {swa_model_path}")
+        
+    if ema_model is not None:
+        print("Validating EMA model...")
+        ema_loss, ema_acc = validate(ema_model, val_loader, loss_fn, device, epoch="EMA_Final")
+        print(f"EMA Final Accuracy: {ema_acc:.2f}%")
+        if wandb.run is not None:
+            wandb.log({"test/ema_acc": ema_acc, "test/ema_loss": ema_loss})
+
+    # Validate SWA Model
+    if swa_model is not None:
+        print("Validating SWA model...")
+        swa_loss, swa_acc = validate(swa_model, val_loader, loss_fn, device, epoch="SWA_Final")
+        print(f"SWA Final Accuracy: {swa_acc:.2f}%")
+        if wandb.run is not None:
+            wandb.log({"test/swa_acc": swa_acc, "test/swa_loss": swa_loss})
+
 
 def train_one_epoch(
     model,
@@ -155,6 +197,7 @@ def train_one_epoch(
     cfg,
     scaler=None,
     global_step=0,
+    ema_model=None,
 ):
     model.train()
     running_loss = 0.0
@@ -182,6 +225,10 @@ def train_one_epoch(
             loss = loss_fn(outputs, label_batch)
             loss.backward()
             optimizer.step()
+
+        # Update EMA model after each optimizer step
+        if ema_model is not None:
+            ema_model.update_parameters(model)
 
         _, preds = outputs.max(1)
         running_loss += loss.item() * img_batch.size(0)
@@ -312,13 +359,35 @@ def get_device(config_device=None):
     return device
 
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a model on CIFAR-100")
     parser.add_argument("--config", type=str, default="configs/baseline.yaml", help="Path to the config file")
     parser.add_argument("--device", type=str, default=None, help="Device to use for training")
     parser.add_argument("--resume", type=str, default=None, help="Path to a checkpoint to resume training from")
+    parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducibility")
+    parser.add_argument("--run-name", type=str, default=None, help="Override run name from config")
+    parser.add_argument("--ema", action="store_true", default=False, help="Enable Exponential Moving Average (EMA)")
+    parser.add_argument("--ema-decay", type=float, default=0.999, help="EMA decay rate (default: 0.999)")
+    parser.add_argument("--swa", action="store_true", default=False, help="Enable Stochastic Weight Averaging (SWA)")
+    parser.add_argument("--swa-start", type=int, default=None, help="Epoch to start SWA (default: 75%% of total epochs)")
+    parser.add_argument("--swa-lr", type=float, default=0.05, help="SWA learning rate (default: 0.05)")
     args = parser.parse_args()
     config = load_config(args.config)
+
+    # Set random seed for reproducibility
+    if args.seed is not None:
+        torch.manual_seed(args.seed)
+        torch.cuda.manual_seed_all(args.seed)
+        np.random.seed(args.seed)
+        random.seed(args.seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        print(f"Set random seed to {args.seed}")
+
+    # Override run name if provided
+    if args.run_name is not None:
+        config["run_name"] = args.run_name
 
     # Handle resume from checkpoint
     if args.resume is not None:
@@ -379,12 +448,35 @@ if __name__ == "__main__":
         )
 
     # ------------------------
+    # EMA and SWA setup
+    # ------------------------
+    ema_model = None
+    swa_model = None
+    swa_scheduler = None
+    swa_start = None
+
+    if args.ema:
+        print(f"EMA enabled with decay={args.ema_decay}")
+        ema_model = AveragedModel(model, multi_avg_fn=get_ema_multi_avg_fn(args.ema_decay))
+
+    if args.swa:
+        num_epochs = config["training"]["epochs"]
+        swa_start = args.swa_start if args.swa_start is not None else int(0.75 * num_epochs)
+        print(f"SWA enabled, starting at epoch {swa_start} with lr={args.swa_lr}")
+        swa_model = AveragedModel(model)
+        swa_scheduler = SWALR(optimizer, swa_lr=args.swa_lr, anneal_epochs=5, anneal_strategy="linear")
+
+    # ------------------------
     # wandb init
     # ------------------------
+    wandb_config = deepcopy(config)
+    wandb_config["ema"] = {"enabled": args.ema, "decay": args.ema_decay if args.ema else None}
+    wandb_config["swa"] = {"enabled": args.swa, "start": swa_start, "lr": args.swa_lr if args.swa else None}
+
     wandb.init(
         project=config["project_name"],
         name=config.get("run_name", None),
-        config=deepcopy(config),
+        config=wandb_config,
     )
 
     # ------------------------
@@ -403,6 +495,10 @@ if __name__ == "__main__":
         start_epoch=start_epoch,
         best_val_acc=best_val_acc,
         global_step=start_global_step,
+        ema_model=ema_model,
+        swa_model=swa_model,
+        swa_scheduler=swa_scheduler,
+        swa_start=swa_start,
     )
 
     # images, labels = next(iter(train_loader))
