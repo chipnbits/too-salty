@@ -1,0 +1,38 @@
+\section{Introduction}
+
+\subsection{Motivation}
+Fine-tuning is a fundamental form of adaptation where updating a pre-trained model on data from a new distribution can improve performance for that specific target domain. \citet{soups} introduced the idea of \emph{souping} by showing that the fine-tuned model parameters produced by different trajectories can be combined into a single model that often generalizes better than any individual variant. This not only captures the benefit of multiple adaptation paths but also introduces an additional adaptive mechanism, as \citet{seasoningsoups} suggest that dynamically adjusting soup weights enables intermediate behaviours that can better match a range of distributional shifts. In contrast to ensembling which combines the \textit{outputs} of models, souping does not increase the computational cost of inference, requiring only a single forward pass.
+
+\citet{soups} hypothesise that souping works because fine-tuned models often lie in the same low-loss basin. The convex combination of their weights is expected to remain in the low-loss basin while reducing variance. They find that when the angle formed by the pre-trained model and the two models to be souped is larger, there is a greater performance to be gained from souping. A wider angle suggests that fine-tuned trajectories are more divergent, thus more variance is reduced by averaging. Understanding why such averaging remains in low-loss regions, how diversity among fine-tuned models contributes to robustness, and when souping is beneficial becomes essential for studying adaptation more broadly.
+
+\subsection{Related Work}
+
+\textbf{Souping}: Souping has been used in a variety of settings. \citet{seasoningsoups} soup models trained to be robust to different distribution shifts and~\citet{ratatouille} soup ingredients trained on different tasks. Both cases lead to better generalisation.~\citet{modelstock} further explore the optimal soup between just two fine-tuned models by considering the angle formed by the two training trajectories in a layer-wise fashion.
+
+\textbf{Stochastic Weight Averaging (SWA)}: Souping is related to the idea of SWA~\cite{stochasticweightaveraging}. In SWA, the ingredients of the soup come from different steps along the same training trajectory. By contrast, souping averages models from independent training trajectories.
+
+% The idea is that SGD introduces noise around a `true' minima which causes the model to bounce around a low loss basin. If we average from multiple points along this trajectory, we lower variance and find a model closer to the true minima.
+
+\textbf{Stability Analysis}: Souping success requires models to be `compatible' in the sense that averaging their weights has low loss.~\citet{linearmode} define \emph{stability to SGD noise}, whereby at some point during training, models become robust to the noise introduced by SGD. All minima obtained by training from that point onwards are linearly mode connected suggesting that if models are trained for long enough, they will become compatible and thus souping will be effective. 
+
+% ~\citet{linearmode} characterise such behaviour as \emph{linear mode connectivity}.
+
+% \textbf{Permutation Alignment}: Ideas around low loss basins have also been exploited by~\citet{gitrebasin} in order to permute the neurones of models such that they are as closely aligned as possible. This is motivated from the observation that neurones can be permuted while leaving the function of the network unchanged. Therefore, two models may not be linearly mode connected, but after alignment, they may become so.
+
+\subsection{Our Contributions}
+
+Following these works, we seek to better understand souping by conducting a series of experiments addressing the following questions:
+
+\textbf{How much shared training is required for souping to be effective?} Models trained from the same pre-trained checkpoint can soup effectively, but how much shared training is required? We investigate varying the number of shared pre-training epochs before splitting into fine-tuned variants.\\
+\textbf{Can we predict the effectiveness of souping using similarity measures?} If two models are very similar, it may be more likely that they can soup effectively. We investigate a variety of similarity measures between models and their ability to predict soup gain.\\
+% \textbf{3. Does permuting models prior to souping make success more likely?} We use permutation alignment methods from~\citet{gitrebasin} to align models prior to souping and investigate whether this increases the effectiveness of souping.\\
+\textbf{Is souping transitive?} If model $A$ soups well with model $B$, and model $B$ soups well with model $C$, does model $A$ soup well with model $C$? The low-loss basin hypothesis suggests that this should be the case.\\
+\textbf{Does souping help with adaptation?} While souping has been shown to help with robustness to distribution shifts, we seek to answer how correlated the soup gains are between in-distribution and out-of-distribution data.
+
+A further experiment investigating the effect of permuting models prior to souping can be found in Appendix~\ref{appendix:permutation_alignment}.
+
+\subsection{Soups and Soup Gain}
+
+For this work, we only soup pairs of models $\theta_A$ and $\theta_B$ using the simple arithmetic mean. That is, $\theta_{\text{soup}} = \frac{1}{2}\theta_A + \frac{1}{2}\theta_B$. We do not consider any other weighted average in order to save on computational cost. Work by~\citet{gitrebasin}, shows many of the loss barriers they find have the most extreme behaviour at the midpoint. Thus we assume that the midpoint serves as an accurate summary statistic of souping performance across the full interpolated range of two models. 
+
+We define the \emph{soup gain} of a pair of models $\theta_A,\theta_B$ as the decrease in loss over a test set obtained by souping the models. That is, $\text{soup gain} = \min\{L(\theta_A), L(\theta_B)\} - L(\theta_{\text{soup}})$ where $L(\theta)$ denotes the test loss obtained using model $\theta$. Soup gain can also be computed in terms of accuracy rather than loss. We use the soup gain as the primary measure of the effectiveness of souping in our experiments. This contrasts with the more lenient measure of comparing the performance of the soup with a weighted average of its ingredients, as used by~\citet{soups}. We prefer to compare to the minimum, as the purpose of a soup should be to improve over its ingredients, not to be better than than their average performance.

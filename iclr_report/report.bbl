@@ -1,0 +1,205 @@
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
+
+\begin{thebibliography}{11}
+
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{} and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showURL}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showURL #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
+
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[Ainsworth et~al\mbox{.}(2023)]%
+        {gitrebasin}
+\bibfield{author}{\bibinfo{person}{Samuel~K. Ainsworth},
+  \bibinfo{person}{Jonathan Hayase}, {and} \bibinfo{person}{Siddhartha
+  Srinivasa}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{title}{Git Re-Basin: Merging Models modulo Permutation
+  Symmetries}.
+\newblock
+\showeprint[arxiv]{2209.04836}~[cs.LG]
+\urldef\tempurl%
+\url{https://arxiv.org/abs/2209.04836}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Croce et~al\mbox{.}(2023)]%
+        {seasoningsoups}
+\bibfield{author}{\bibinfo{person}{Francesco Croce},
+  \bibinfo{person}{Sylvestre-Alvise Rebuffi}, \bibinfo{person}{Evan Shelhamer},
+  {and} \bibinfo{person}{Sven Gowal}.} \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{title}{Seasoning Model Soups for Robustness to Adversarial
+  and Natural Distribution Shifts}.
+\newblock
+\showeprint[arxiv]{2302.10164}~[cs.LG]
+\urldef\tempurl%
+\url{https://arxiv.org/abs/2302.10164}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Dadalto(2023)]%
+        {cifar100params}
+\bibfield{author}{\bibinfo{person}{Eduardo Dadalto}.}
+  \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{title}{ResNet-50 Model Trained on CIFAR-100}.
+\newblock
+  \bibinfo{howpublished}{\url{https://huggingface.co/edadaltocg/resnet50_cifar100}}.
+\newblock
+\newblock
+\shownote{Hugging Face Model Repository}.
+
+
+\bibitem[Frankle et~al\mbox{.}(2020)]%
+        {linearmode}
+\bibfield{author}{\bibinfo{person}{Jonathan Frankle},
+  \bibinfo{person}{Gintare~Karolina Dziugaite}, \bibinfo{person}{Daniel~M.
+  Roy}, {and} \bibinfo{person}{Michael Carbin}.}
+  \bibinfo{year}{2020}\natexlab{}.
+\newblock \bibinfo{title}{Linear Mode Connectivity and the Lottery Ticket
+  Hypothesis}.
+\newblock
+\showeprint[arxiv]{1912.05671}~[cs.LG]
+\urldef\tempurl%
+\url{https://arxiv.org/abs/1912.05671}
+\showURL{%
+\tempurl}
+
+
+\bibitem[He et~al\mbox{.}(2016)]%
+        {resnet50}
+\bibfield{author}{\bibinfo{person}{Kaiming He}, \bibinfo{person}{Xiangyu
+  Zhang}, \bibinfo{person}{Shaoqing Ren}, {and} \bibinfo{person}{Jian Sun}.}
+  \bibinfo{year}{2016}\natexlab{}.
+\newblock \showarticletitle{{Deep Residual Learning for Image Recognition}}. In
+  \bibinfo{booktitle}{\emph{Proceedings of 2016 IEEE Conference on Computer
+  Vision and Pattern Recognition}} (Las Vegas, NV, USA)
+  \emph{(\bibinfo{series}{CVPR '16})}. \bibinfo{publisher}{IEEE},
+  \bibinfo{address}{Las Vegas, NV, USA}, \bibinfo{pages}{770--778}.
+\newblock
+\showISSN{1063-6919}
+\href{https://doi.org/10.1109/CVPR.2016.90}{doi:\nolinkurl{10.1109/CVPR.2016.90}}
+
+
+\bibitem[Hendrycks and Dietterich(2019)]%
+        {cifar100c}
+\bibfield{author}{\bibinfo{person}{Dan Hendrycks} {and} \bibinfo{person}{Thomas
+  Dietterich}.} \bibinfo{year}{2019}\natexlab{}.
+\newblock \bibinfo{title}{Benchmarking Neural Network Robustness to Common
+  Corruptions and Perturbations}.
+\newblock
+\showeprint[arxiv]{1903.12261}~[cs.LG]
+\urldef\tempurl%
+\url{https://arxiv.org/abs/1903.12261}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Izmailov et~al\mbox{.}(2019)]%
+        {stochasticweightaveraging}
+\bibfield{author}{\bibinfo{person}{Pavel Izmailov}, \bibinfo{person}{Dmitrii
+  Podoprikhin}, \bibinfo{person}{Timur Garipov}, \bibinfo{person}{Dmitry
+  Vetrov}, {and} \bibinfo{person}{Andrew~Gordon Wilson}.}
+  \bibinfo{year}{2019}\natexlab{}.
+\newblock \bibinfo{title}{Averaging Weights Leads to Wider Optima and Better
+  Generalization}.
+\newblock
+\showeprint[arxiv]{1803.05407}~[cs.LG]
+\urldef\tempurl%
+\url{https://arxiv.org/abs/1803.05407}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Jang et~al\mbox{.}(2025)]%
+        {modelstock}
+\bibfield{author}{\bibinfo{person}{Dong-Hwan Jang}, \bibinfo{person}{Sangdoo
+  Yun}, {and} \bibinfo{person}{Dongyoon Han}.} \bibinfo{year}{2025}\natexlab{}.
+\newblock \bibinfo{title}{Model Stock: All we need is just a few fine-tuned
+  models}.
+\newblock
+\showeprint[arxiv]{2403.19522}~[cs.LG]
+\urldef\tempurl%
+\url{https://arxiv.org/abs/2403.19522}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Kornblith et~al\mbox{.}(2019)]%
+        {SimilarityCKA}
+\bibfield{author}{\bibinfo{person}{Simon Kornblith}, \bibinfo{person}{Mohammad
+  Norouzi}, \bibinfo{person}{Honglak Lee}, {and} \bibinfo{person}{Geoffrey
+  Hinton}.} \bibinfo{year}{2019}\natexlab{}.
+\newblock \bibinfo{title}{Similarity of Neural Network Representations
+  Revisited}.
+\newblock
+\showeprint[arxiv]{1905.00414}~[cs.LG]
+\urldef\tempurl%
+\url{https://arxiv.org/abs/1905.00414}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Ramé et~al\mbox{.}(2023)]%
+        {ratatouille}
+\bibfield{author}{\bibinfo{person}{Alexandre Ramé}, \bibinfo{person}{Kartik
+  Ahuja}, \bibinfo{person}{Jianyu Zhang}, \bibinfo{person}{Matthieu Cord},
+  \bibinfo{person}{Léon Bottou}, {and} \bibinfo{person}{David Lopez-Paz}.}
+  \bibinfo{year}{2023}\natexlab{}.
+\newblock \bibinfo{title}{Model Ratatouille: Recycling Diverse Models for
+  Out-of-Distribution Generalization}.
+\newblock
+\showeprint[arxiv]{2212.10445}~[cs.LG]
+\urldef\tempurl%
+\url{https://arxiv.org/abs/2212.10445}
+\showURL{%
+\tempurl}
+
+
+\bibitem[Wortsman et~al\mbox{.}(2022)]%
+        {soups}
+\bibfield{author}{\bibinfo{person}{Mitchell Wortsman}, \bibinfo{person}{Gabriel
+  Ilharco}, \bibinfo{person}{Samir~Yitzhak Gadre}, \bibinfo{person}{Rebecca
+  Roelofs}, \bibinfo{person}{Raphael Gontijo-Lopes}, \bibinfo{person}{Ari~S.
+  Morcos}, \bibinfo{person}{Hongseok Namkoong}, \bibinfo{person}{Ali Farhadi},
+  \bibinfo{person}{Yair Carmon}, \bibinfo{person}{Simon Kornblith}, {and}
+  \bibinfo{person}{Ludwig Schmidt}.} \bibinfo{year}{2022}\natexlab{}.
+\newblock \bibinfo{title}{Model soups: averaging weights of multiple fine-tuned
+  models improves accuracy without increasing inference time}.
+\newblock
+\showeprint[arxiv]{2203.05482}~[cs.LG]
+\urldef\tempurl%
+\url{https://arxiv.org/abs/2203.05482}
+\showURL{%
+\tempurl}
+
+
+\end{thebibliography}
