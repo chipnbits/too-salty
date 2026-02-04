@@ -29,7 +29,7 @@ DATA_DIR = os.getenv("DATA_DIR", "./data")
 
 
 def run_single_experiment(run_index, config, args):
-    """Run a single training experiment with baseline, EMA, and SWA tracking."""
+    """Run a single training experiment with branched Baseline/EMA and SWA paths."""
 
     seed = config["data"]["split_seed"] + run_index
     run_id = f"run_{run_index:02d}_seed_{seed}"
@@ -40,7 +40,7 @@ def run_single_experiment(run_index, config, args):
     print(f"Starting {run_id} ({run_index + 1}/{args.runs})")
     print(f"{'='*60}")
 
-    # Set random seed for reproducibility
+    # Set random seed
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
@@ -58,24 +58,20 @@ def run_single_experiment(run_index, config, args):
         augment=config["data"].get("augment", True),
     )
 
-    # Build model, optimizer, scheduler
+    # ---------------------------------------------------------
+    # 1. SETUP SHARED INITIAL STATE
+    # ---------------------------------------------------------
     model = get_resnet50_model(num_classes=config["data"]["num_classes"]).to(args.device)
     optimizer = build_optimizer(config["optimizer"], model)
     scheduler = build_scheduler(config.get("scheduler", {}), optimizer)
     loss_fn = nn.CrossEntropyLoss(label_smoothing=0.1)
-
-    # EMA model - updates every step
     ema_model = AveragedModel(model, multi_avg_fn=get_ema_multi_avg_fn(args.ema_decay))
-    print(f"EMA enabled with decay={args.ema_decay}")
-
-    # SWA model - starts late in training
+    
+    # SWA settings
     num_epochs = config["training"]["epochs"]
-    swa_start = args.swa_start if args.swa_start is not None else int(0.80 * num_epochs)
-    swa_model = AveragedModel(model)
-    swa_scheduler = SWALR(optimizer, swa_lr=args.swa_lr, anneal_strategy="linear", anneal_epochs=5)
-    print(f"SWA enabled, starting at epoch {swa_start} with lr={args.swa_lr}")
-
-    # Initialize wandb
+    swa_start = args.swa_start if args.swa_start is not None else int(0.75 * num_epochs)
+    
+    # WandB Init
     wandb_config = deepcopy(config)
     wandb_config["seed"] = seed
     wandb_config["ema"] = {"enabled": True, "decay": args.ema_decay}
@@ -84,141 +80,175 @@ def run_single_experiment(run_index, config, args):
     wandb.init(
         project=config["project_name"],
         name=run_id,
-        group="ema_swa_batch",
+        group="ema_swa_branching",
         config=wandb_config,
         reinit=True,
     )
 
-    # Training state
+    # State tracking
     best_baseline_acc = 0.0
     best_ema_acc = 0.0
-    best_swa_acc = 0.0
     global_step = 0
     val_interval = config["logging"]["val_interval"]
+    branch_point_path = os.path.join(save_dir, "ckpt_branch_point.pt")
 
-    # Training loop
+    # ---------------------------------------------------------
+    # 2. PHASE 1: MAIN TRUNK (Baseline + EMA)
+    # ---------------------------------------------------------
+    print(f"Phase 1: Training Main Trunk (Epochs 0-{num_epochs})")
+    
     for epoch in range(num_epochs):
-        in_swa_phase = epoch >= swa_start
+        
+        # --- BRANCHING LOGIC ---
+        # We save the state right before the SWA start epoch.
+        if epoch == swa_start:
+            print(f" >> Reached SWA fork point (Epoch {epoch}). Saving branch checkpoint...")
+            torch.save({
+                "model_state": model.state_dict(),
+                "optimizer_state": optimizer.state_dict(),
+                "epoch": epoch,
+            }, branch_point_path)
+        # -----------------------
 
-        # Train one epoch (EMA updates happen inside train_one_epoch)
+        # Train one epoch (Baseline updates weights, EMA follows)
         train_loss, train_acc, global_step = train_one_epoch(
-            model,
-            train_loader,
-            loss_fn,
-            optimizer,
-            args.device,
-            epoch,
-            config,
-            scaler=None,
-            global_step=global_step,
-            ema_model=ema_model,
+            model, train_loader, loss_fn, optimizer, args.device,
+            epoch, config, scaler=None, global_step=global_step,
+            ema_model=ema_model 
         )
 
-        # Update SWA model at end of epoch (only in SWA phase)
-        if in_swa_phase:
-            swa_model.update_parameters(model)
-            swa_scheduler.step()
-        else:
-            if scheduler is not None:
-                scheduler.step()
+        if scheduler is not None:
+            scheduler.step()
 
-        # Validation
+        # Validation (Baseline)
         if (epoch + 1) % val_interval == 0:
-            # Validate baseline model
             val_loss, val_acc = validate(model, val_loader, loss_fn, args.device, epoch)
-
-            # Log to wandb
+            
             wandb.log({
-                "train/loss": train_loss,
-                "train/acc": train_acc,
-                "val/loss": val_loss,
-                "val/acc": val_acc,
-                "epoch": epoch,
-                "lr": optimizer.param_groups[0]["lr"],
+                "train/loss": train_loss, "train/acc": train_acc,
+                "val/loss": val_loss, "val/acc": val_acc,
+                "epoch": epoch, "lr": optimizer.param_groups[0]["lr"],
             }, step=global_step)
 
-            # Save best baseline
             if val_acc > best_baseline_acc:
                 best_baseline_acc = val_acc
                 torch.save({
                     "model_state": model.state_dict(),
-                    "epoch": epoch,
                     "val_acc": val_acc,
                     "config": config,
                 }, os.path.join(save_dir, "baseline_best.pt"))
-                print(f"  New best baseline: {val_acc:.2f}%")
 
-            # Validate EMA model periodically
+            # Validation (EMA) - Check periodically
             if (epoch + 1) % (val_interval * 5) == 0 or epoch == num_epochs - 1:
-                ema_val_loss, ema_val_acc = validate(ema_model, val_loader, loss_fn, args.device, f"{epoch}_ema")
-                wandb.log({"val/ema_acc": ema_val_acc, "val/ema_loss": ema_val_loss}, step=global_step)
-
-                if ema_val_acc > best_ema_acc:
-                    best_ema_acc = ema_val_acc
-                    # Save intermediate EMA checkpoint
+                ema_loss, ema_acc = validate(ema_model, val_loader, loss_fn, args.device, f"{epoch}_ema")
+                wandb.log({"val/ema_acc": ema_acc, "val/ema_loss": ema_loss}, step=global_step)
+                
+                if ema_acc > best_ema_acc:
+                    best_ema_acc = ema_acc
                     torch.save({
                         "model_state": ema_model.module.state_dict(),
-                        "epoch": epoch,
-                        "val_acc": ema_val_acc,
+                        "val_acc": ema_acc,
                         "config": config,
                     }, os.path.join(save_dir, "ema_best.pt"))
-                    print(f"  New best EMA: {ema_val_acc:.2f}%")
 
-    # Finalize: Update BN stats for EMA and SWA
+    # Finalize EMA (Main Trunk Complete)
     print("\nFinalizing EMA model (updating BN stats)...")
     update_bn(train_loader, ema_model, device=args.device)
-
-    print("Finalizing SWA model (updating BN stats)...")
-    update_bn(train_loader, swa_model, device=args.device)
-
-    # Final validation of EMA
     ema_final_loss, ema_final_acc = validate(ema_model, val_loader, loss_fn, args.device, "EMA_final")
-    print(f"EMA Final Accuracy: {ema_final_acc:.2f}%")
-
-    # Final validation of SWA
-    swa_final_loss, swa_final_acc = validate(swa_model, val_loader, loss_fn, args.device, "SWA_final")
-    print(f"SWA Final Accuracy: {swa_final_acc:.2f}%")
-
-    # Log final metrics
-    wandb.log({
-        "final/ema_acc": ema_final_acc,
-        "final/ema_loss": ema_final_loss,
-        "final/swa_acc": swa_final_acc,
-        "final/swa_loss": swa_final_loss,
-        "final/baseline_best_acc": best_baseline_acc,
-    })
-
-    # Save final models
-    torch.save({
-        "model_state": ema_model.module.state_dict(),
-        "val_acc": ema_final_acc,
-        "config": config,
-    }, os.path.join(save_dir, "ema_final.pt"))
-
-    torch.save({
-        "model_state": swa_model.module.state_dict(),
-        "val_acc": swa_final_acc,
-        "config": config,
-    }, os.path.join(save_dir, "swa_final.pt"))
-
-    # Save last baseline model
+    
+    # Save Final Baseline
     torch.save({
         "model_state": model.state_dict(),
         "epoch": num_epochs - 1,
         "config": config,
     }, os.path.join(save_dir, "baseline_last.pt"))
 
+    torch.save({
+        "model_state": ema_model.module.state_dict(),
+        "val_acc": ema_final_acc,
+    }, os.path.join(save_dir, "ema_final.pt"))
+
+    # ---------------------------------------------------------
+    # 3. PHASE 2: SWA BRANCH
+    # ---------------------------------------------------------
+    print(f"\nPhase 2: SWA Branch (Retraining from Epoch {swa_start}-{num_epochs})")
+    
+    # RESET: Load the model/optimizer state from the branch point
+    if os.path.exists(branch_point_path):
+        checkpoint = torch.load(branch_point_path, map_location=args.device)
+        model.load_state_dict(checkpoint["model_state"])
+        optimizer.load_state_dict(checkpoint["optimizer_state"])
+        print(f" >> Loaded branch point from {branch_point_path}")
+    else:
+        print(" !! Warning: No branch point found. SWA will run on the fully trained model (Suboptimal).")
+
+    # Initialize SWA specific components
+    swa_model = AveragedModel(model)
+    # Important: Create a FRESH scheduler for SWA, ignoring the old scheduler state
+    swa_scheduler = SWALR(optimizer, swa_lr=args.swa_lr, anneal_strategy="linear", anneal_epochs=5)
+    
+    print(f"SWA Strategy: Starting at epoch {swa_start}, LR={args.swa_lr}")
+
+    # SWA Loop
+    # Note: We do not update global_step here to keep wandb charts clean, 
+    # or we log to a separate section.
+    for epoch in range(swa_start, num_epochs):
+        
+        # Train one epoch (Model weights diverge here from Baseline)
+        # We pass ema_model=None because EMA is already done in Phase 1
+        train_loss, train_acc, _ = train_one_epoch(
+            model, train_loader, loss_fn, optimizer, args.device,
+            epoch, config, scaler=None, global_step=0, 
+            ema_model=None 
+        )
+        
+        # Update SWA parameters and Scheduler
+        swa_model.update_parameters(model)
+        swa_scheduler.step()
+        
+        wandb.log({
+            "swa_branch/train_loss": train_loss,
+            "swa_branch/train_acc": train_acc,
+            "swa_branch/lr": optimizer.param_groups[0]["lr"],
+            "epoch": epoch
+        })
+
+    # Finalize SWA
+    print("Finalizing SWA model (updating BN stats)...")
+    update_bn(train_loader, swa_model, device=args.device)
+    swa_final_loss, swa_final_acc = validate(swa_model, val_loader, loss_fn, args.device, "SWA_final")
+    print(f"SWA Final Accuracy: {swa_final_acc:.2f}%")
+
+    # ---------------------------------------------------------
+    # 4. WRAP UP & CLEANUP
+    # ---------------------------------------------------------
+    
+    # Log final comparison
+    wandb.log({
+        "final/ema_acc": ema_final_acc,
+        "final/swa_acc": swa_final_acc,
+        "final/baseline_best_acc": best_baseline_acc,
+    })
+
+    # Save Models
+    torch.save({
+        "model_state": swa_model.module.state_dict(),
+        "val_acc": swa_final_acc,
+    }, os.path.join(save_dir, "swa_final.pt"))
+
+    # Cleanup temp checkpoint
+    if os.path.exists(branch_point_path):
+        os.remove(branch_point_path)
+
     print(f"\nRun {run_id} complete!")
     print(f"  Best Baseline: {best_baseline_acc:.2f}%")
-    print(f"  Best EMA: {best_ema_acc:.2f}%")
-    print(f"  Final EMA: {ema_final_acc:.2f}%")
-    print(f"  Final SWA: {swa_final_acc:.2f}%")
-    print(f"  Models saved to: {save_dir}")
-
+    print(f"  Final EMA:     {ema_final_acc:.2f}%")
+    print(f"  Final SWA:     {swa_final_acc:.2f}%")
+    
     wandb.finish()
 
-    # Cleanup
-    del model, ema_model, swa_model, optimizer, scheduler
+    # Memory cleanup
+    del model, ema_model, swa_model, optimizer, scheduler, swa_scheduler
     torch.cuda.empty_cache()
     gc.collect()
 
@@ -226,7 +256,6 @@ def run_single_experiment(run_index, config, args):
         "run_id": run_id,
         "seed": seed,
         "best_baseline_acc": best_baseline_acc,
-        "best_ema_acc": best_ema_acc,
         "final_ema_acc": ema_final_acc,
         "final_swa_acc": swa_final_acc,
     }
@@ -265,8 +294,8 @@ if __name__ == "__main__":
     parser.add_argument("--runs", type=int, default=20, help="Total number of runs")
     # Use parallel dispatch for device
     parser.add_argument("--ema-decay", type=float, default=0.999)
-    parser.add_argument("--swa-start", type=int, default=None)
-    parser.add_argument("--swa-lr", type=float, default=0.05)
+    parser.add_argument("--swa-start", type=int, default=220)
+    parser.add_argument("--swa-lr", type=float, default=0.03)
     parser.add_argument("--start-run", type=int, default=0)
     args = parser.parse_args()
 
