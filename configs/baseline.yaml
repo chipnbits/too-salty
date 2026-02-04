@@ -14,7 +14,7 @@ model:
   checkpoint_path: null  # or "models/pretrained-resnet50.pt"
 
 training:
-  epochs: 300
+  epochs: 280
   batch_size: 128
   num_workers: 4
   mixed_precision: false
@@ -37,6 +37,6 @@ scheduler: # MultiStepLR, StepLR, CosineAnnealingLR, None
 logging:
   log_interval: 50      # log to wandb every N training steps
   val_interval: 1       # run validation every N epochs
-  checkpoint_interval: 10 # spacing to save model checkpoints (in epochs)
+  checkpoint_interval: 50 # spacing to save model checkpoints (in epochs)
 
 
