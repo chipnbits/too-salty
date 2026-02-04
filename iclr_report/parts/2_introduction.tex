@@ -1,6 +1,6 @@
 \section{Introduction}
 
-\subsection{Motivation}
+% \subsection{Motivation}
 
 % Fine-tuning is a fundamental form of adaptation where updating a pre-trained model on data from a new distribution can improve performance for that specific target domain. 
 
@@ -13,7 +13,7 @@
 \textbf{Souping}: Souping has been used in a variety of settings. \citet{seasoningsoups} soup models trained to be robust to different distribution shifts and~\citet{ratatouille} soup ingredients trained on different tasks. Both cases lead to better generalisation.~\citet{modelstock} further explore the optimal soup between just two fine-tuned models by considering the angle formed by the two training trajectories in a layer-wise fashion.
 
 \textbf{Stochastic Weight Averaging (SWA)}: Souping is related to the idea of SWA~\cite{stochasticweightaveraging}. In SWA, the ingredients of the soup come from different steps along the same training trajectory. By contrast, souping averages models from independent training trajectories.
-\textbf{Exponential Moving Average (EMA)}: Another method for averaging weights over training is EMA~\cite{ema}. Here, the weights at each training step are combined with the previous average using an exponential decay.
+\textbf{Exponential Moving Average (EMA)}: Another method for averaging weights over training is EMA~\cite{exponentialmovingaverageweights}. Here, the weights at each training step are combined with the previous average using an exponential decay.
 % The idea is that SGD introduces noise around a `true' minima which causes the model to bounce around a low loss basin. If we average from multiple points along this trajectory, we lower variance and find a model closer to the true minima.
 
 \textbf{Stability Analysis}: Souping success requires models to be `compatible' in the sense that averaging their weights has low loss.~\citet{linearmode} define \emph{stability to SGD noise}, whereby at some point during training, models become robust to the noise from SGD in the sense that all possible minima obtained by training from that point onwards lie in the same low-loss basin.
@@ -26,16 +26,16 @@
 
 Following these works, we seek to better understand souping by conducting a series of experiments addressing the following questions:
 
-\textbf{How much shared training is required for souping to be effective?} Models trained from the same pre-trained checkpoint can soup effectively, but how much shared training is required?\\
-%  We investigate varying the number of shared pre-training epochs before splitting into fine-tuned variants.
+\textbf{How much shared training is required for souping to be effective?} We investigate varying the number of shared pre-training epochs before splitting into fine-tuned variants.\\
+%  Models trained from the same pre-trained checkpoint can soup effectively, but how much shared training is required?\\We investigate varying the number of shared pre-training epochs before splitting into fine-tuned variants.
 \textbf{Can we predict the effectiveness of souping using similarity measures?} If two models are very similar, it may be more likely that they can soup effectively.\\
 % We investigate a variety of similarity measures between models and their ability to predict soup gain
 % \textbf{3. Does permuting models prior to souping make success more likely?} We use permutation alignment methods from~\citet{gitrebasin} to align models prior to souping and investigate whether this increases the effectiveness of souping.\\
-\textbf{Is souping transitive?} If model $A$ soups with $B$, and $B$ soups with $C$, will $A$ soup well with model $C$? \\
+\textbf{Is souping transitive —} If model $A$ soups with $B$, and $B$ soups with $C$, will $A$ soup with $C$? \\
 % The low-loss basin hypothesis suggests that this should be the case.
 \textbf{Does souping in-distribution predict souping out-of-distribution?} While souping has been shown to help with robustness to distribution shifts, we seek to answer how correlated the soup gains are between in-distribution and out-of-distribution data.
 
-Further experiments investigating the effect of permuting models prior to souping and how souping affects robustness can be found in Appendix~\ref{appendix:permutation_alignment} and~\ref{fig:soup_robustness_cdf} respectively.
+Further experiments investigating the effect of permuting models~\cite{gitrebasin} prior to souping and how souping affects robustness can be found in Appendix~\ref{appendix:permutation_alignment} and~\ref{fig:soup_robustness_cdf} respectively.
 
 \subsection{Soups and Soup Gain}
 
