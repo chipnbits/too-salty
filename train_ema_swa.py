@@ -292,7 +292,7 @@ def gpu_worker(gpu_id, queue, config, base_args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Batch training with EMA and SWA")
     parser.add_argument("--config", type=str, default="configs/baseline.yaml")
-    parser.add_argument("--runs", type=int, default=20, help="Total number of runs")
+    parser.add_argument("--runs", type=int, default=14, help="Total number of runs")
     # Use parallel dispatch for device
     parser.add_argument("--ema-decay", type=float, default=0.999)
     parser.add_argument("--swa-start", type=int, default=220)

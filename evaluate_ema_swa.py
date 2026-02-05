@@ -110,7 +110,7 @@ def run_ema_swa_evaluation(
     for run_dir in tqdm(run_dirs, desc="Processing Runs"):
         model_loader = EMA_SWA_Loader(run_dir, device)
         
-        if model_loader.run_id in ["06","07","08"]:  # skip these runs in progress
+        if model_loader.run_id in ["12", "13"]:  # skip these runs in progress
             print(f"Skipping run_id {model_loader.run_id} due to incomplete run.")
             continue
 
@@ -168,6 +168,7 @@ if __name__ == "__main__":
     # for each subdirectory, load models and evaluate
     results = []
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cuda:0"
     _,_, test_loader = get_cifar100_loaders(batch_size=128)
     corruption_loaders = get_cifar100c_loaders_by_corruption(
                 batch_size=batch_size,
@@ -178,7 +179,7 @@ if __name__ == "__main__":
         root_dir=EMA_SWA_DIR,
         clean_loader=test_loader,
         corrupted_loaders=corruption_loaders,
-        device="cpu",
+        device=device,
         output_csv="ema_swa_robustness_results.csv"
     )
     
