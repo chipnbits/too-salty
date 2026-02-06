@@ -1,0 +1,107 @@
+\section{Experiments}\label{sec:experiments}
+
+\subsection{Method}
+
+We train a baseline model for image classification on the CIFAR-100 dataset with ResNet-50~\cite{resnet50} using a well-known set of hyper-parameters~\cite{cifar100params} with image reflection and random translation with padding for data augmentation. We hold out $5\%$ of the $50,000$ training images as a validation set, as well as $10,000$ images for testing. The baseline model is saved every 10 epochs. From each save point, we branch off and train $4$ new models with different optimizer settings. For details, see Appendix Tables~\ref{tab:optimizer_perturbations} and~\ref{tab:hyperparams_baseline}. All models are each trained to convergence, with the best validation scored model weights saved for the experiments. This process is illustrated in Figure~\ref{fig:evolution}. A total of $4$ variants and $26$ branch points were trained, yielding $104$ related models and $5,356$ binary souping combinations for analysis. 
+
+% Our experiments are designed to recreate the effect of different fine-tuning trajectories, but with varying diversity of pre-trained model and length of fine-tuning.
+
+\subsection{Shared Epochs and Soup Gain}
+
+We group the soups by the number of shared epochs between the two ingredients before they diverge into different training trajectories. For example, a pair of models branched form the baseline at epoch 50 and 100 respectively share 50 epochs. In Figure~\ref{fig:soup_gain_quantiles}, we plot quantiles of soup gain as a function of shared epochs. We observe the distribution of soup gains shifts positively as the number of shared epochs increases. However, the soup gain is often large and negative until around epoch 150. After epoch 250, nearly all soups are approximately neutral.
+
+% \begin{figure}[ht]
+%     \centering
+%     \includegraphics[width=0.8\linewidth]{./figures/soup_gain_quantiles_vs_shared_epochs.pdf}
+%     % \Description{A line plot figure showing quantiles of soup gain against shared epochs.}
+%     \caption{Quantiles of soup gain vs shared epochs. 
+%     % As the number of shared epochs increases, the distribution of soup gains shifts positively. However, the median soup gain is negative until around 150 shared epochs. After 250 shared epochs, nearly all soups are approximately neutral.
+%     }\label{fig:soup_gain_quantiles}
+
+% \end{figure}
+% \begin{figure}[ht]
+%     \centering
+%     \includegraphics[width=0.8\linewidth]{./figures/combined_prob_and_conditional_gain.pdf}
+%       % \Description{A line plot figure showing probability of positive soup gain and expected soup gain given positive soup gain against shared epochs.}
+%     \caption{Probability of positive soup gain and expected soup gain given positive soup gain vs shared epochs. 
+%     % As shared epochs increases, the probability of positive soup gain increases, reaching around $80\%$ after 250 shared epochs. The expected soup gain given positive soup gain is relatively flat at around 0.5\% accuracy improvement, decreasing to around 0.2\% at high shared epochs.
+%     }\label{fig:prob_and_conditional_gain}  
+
+% \end{figure}
+
+\begin{figure}[ht]
+  \centering
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{./figures/soup_gain_quantiles_vs_shared_epochs.pdf}
+    \caption{Quantiles of soup gain vs shared epochs.}
+    \label{fig:soup_gain_quantiles}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{./figures/combined_prob_and_conditional_gain.pdf}
+    \caption{Probability of positive soup gain and conditional expected gain vs shared epochs.}
+    \label{fig:prob_and_conditional_gain}
+  \end{minipage}
+\end{figure}
+
+
+To better illustrate how much souping helps, we plot the probability of positive soup gain and the average soup gain in accuracy for such positive soups in Figure~\ref{fig:prob_and_conditional_gain}.The probability of positive soup gain increases with shared epochs, reaching around $80\%$ after 250 shared epochs. The conditional expected soup gain is noisy, at around 0.5\% accuracy improvement when souping works. Towards the upper end of shared epochs, the gains decrease to around 0.2\%. This suggests that while souping becomes more likely to work with increased shared training, the magnitude of gain decreases when the models are too similar.
+
+
+\subsection{Predicting Soupability with Similarity}
+
+Given two models, can we predict whether or not they will soup? To test this hypothesis, we compute a variety of similarity and distance metrics between pairs of models. We find that all metrics perform similarly. A plot for all metrics can be found in Figure~\ref{fig:soup_gain_vs_all_metrics}. We arbitrarily choose to show the KL divergence between the outputs of the ingredients in Figure~\ref{fig:soup_gain_vs_kl_logits} as an example. There is a strong correlation between KL divergence and soup gain with a Spearman correlation between of -0.86. However, many of these soups have very poor performance. Figure~\ref{fig:soup_gain_vs_kl_positive_soups} shows the soup gain against KL divergence for only those models with positive soup gain, with a moderate positive correlation with a Spearman correlation of 0.39. Models must be sufficiently similar in order to soup, but to be effective, the models must also be sufficiently different. Balancing these two effects is key to tasty soups.
+
+% This includes the l2 distance and cosine similarity on a vector of the model parameters, the Kullback-Leibler (KL) divergence between the output logits on the test set, the mean squared error (MSE) between the output logits on the test set, and the Centered Kernel Alignment (CKA)~\citep{SimilarityCKA} between the logits and the penultimate layer activations on the test set. 
+
+
+
+\begin{figure}[ht]
+  \centering
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{./figures/soup_gain_vs_kl.png}
+    \caption{KL vs soup gain (Spearman $-0.86$).}
+    \label{fig:soup_gain_vs_kl_logits}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{./figures/soup_gain_vs_kl_positive_soups.png}
+    \caption{KL vs soup gain, positive soups only (Spearman $0.39$).}
+    \label{fig:soup_gain_vs_kl_positive_soups}
+  \end{minipage}
+\end{figure}
+
+
+
+\subsection{Is Souping Transitive?}
+
+If model $A$ soups successfully with models $B$ and $C$, will $B$ and $C$ also soup successfully? If models soups together when they lie in the same low loss region, then transitivity should hold. To test this hypothesis, we consider all triplets of models $(A, B, C)$. We plot the probability that $B$ and $C$ soup against the number of positive soups involving $A$ in Figure~\ref{fig:transitivity}. We observe that the probability that $B$ and $C$ soup is only high when $A$ soups with both $B$ and $C$. We also plot the soup gain between $B$ and $C$ against the minimum soup gain of $(A, B)$ and $(A, C)$ in Figure~\ref{fig:transitivity_min}, noting a moderate positive Spearman correlation of 0.64.
+
+\begin{figure}[ht]
+  \centering
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{./figures/transitivity_binary.pdf}
+    \caption{Probability of positive soup gain of $B$ and $C$ vs positive soups with $A$.}
+    \label{fig:transitivity}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{./figures/model_embeddings.pdf}
+    \caption{2D embedding of 104 models using soup-gain distance; edges indicate positive soups.}
+    \label{fig:model_embedding}
+  \end{minipage}
+\end{figure}
+
+
+Following transitivity, we investigate whether there are clusters of models that soup well together. We embed our $104$ models into 2D using soup gain as a distance metric and plot them in Figure~\ref{fig:model_embedding}. The details of generating this plot can be found in Section~\ref{sec:model_embedding_creation}. We find that most successful soups lie in a single cluster of models all branched from later on in the training procedure. We conclude that souping is approximately transitive. There are many counter-examples, but this work supports the idea that, in general, soups lie in a single loss basin.
+
+\subsection{Souping for Robustness to Corruption}
+
+All experiments thus far have measured soup gain on a held-out test set. However, souping has also been used for robustness to distribution shift~\citep{seasoningsoups}. To establish whether souping for in-distribution performance also increases out-of-distribution performance, we compute the soup gain on CIFAR-100C~\citep{cifar100c} with severity level 3. The soup gains on test and corrupted data correlate very well, with a Spearman correlation of 0.99. A scatterplot can be found in Figure~\ref{fig:test_vs_corrupted}. The positive trend still holds when conditioning on only soups with positive soup gain on the test set, with a Pearson correlation of $0.61$. A plot can be found in Figure~\ref{fig:test_vs_corrupted_pos}. In-distribution performance improvement transfers to unseen target distributions.
+
+We also plot the probability of positive soup gain on corrupted data as a function of shared epochs in Figure~\ref{fig:soup_corrupted_positive_gain_prob}. The probability of positive gain increases with the number of shared epochs for both clean and corrupted data but the corrupted data always has a lower probability of positive gain.
+
+%  We test whether souping can help reduce the gap between the test set and corrupted set loss, or \emph{robustness gap}. The mean and median difference in robustness gap before and after souping is approximately 0, indicating that souping does not improve this gap, see the CDF plotted in Figure~\ref{fig:soup_robustness_cdf}.
