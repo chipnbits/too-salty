@@ -1,0 +1,87 @@
+% Short document to track our plans to the reviewers. We will update this document as we go along.
+
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{amssymb}
+\usepackage{hyperref}
+
+% Page layout
+\geometry{a4paper, margin=1in}
+
+\title{\textbf{Action Plan: Reviewer \#2 (Review \#3B) Feedback}}
+\author{CSSRC26 Authors}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Overview}
+This document tracks the tasks required to address the feedback from Reviewer \#3B. The reviewer provided specific constructive requests categorized by priority, scope, and reproducibility.
+
+\section{High-Priority Improvements}
+\begin{itemize}[label=$\square$]
+    \item \textbf{Interpretability of Soup Gain:} 
+    Report simple success rates alongside the current definitions:
+    \begin{itemize}
+        \item Percentage of soups beating the \textit{average} parent.
+        \item Percentage of soups beating the \textit{best} parent by meaningful margins (e.g., $\ge 0.2\%$ and $\ge 0.5\%$ accuracy)[cite: 67].
+    \end{itemize}
+    Do we have space for this data? It could potentially replace the quantile plots and be easier to read than current Figs 1 and 2
+    
+    \item \textbf{Uncertainty Quantification:} 
+    Add bootstrap confidence intervals (e.g., 95\% CI) for key correlations and trend lines (specifically: similarity vs. soup gain; clean vs. corrupted gain)[cite: 69].
+
+    Can we add this to current analysis?
+    
+    \item \textbf{Sensitivity Check:} 
+    If feasible, repeat a subset of experiments with a different random seed or a second branching tree to verify robustness[cite: 70]. 
+    
+    Not feasible at the moment
+    
+    \item \textbf{Collapse Definition \& Metrics:} 
+    \begin{itemize}
+        \item Define a concrete criterion for "collapse" (e.g., accuracy near chance or loss threshold).
+        \item Report counts/percentages for catastrophic failures vs. mild regressions[cite: 71].
+    \end{itemize}
+
+    - Can we define this as a relative loss increase? The plot does not change much between 10\% and 50\% loss increase. This is a definition that is more portable to other settings.
+    
+    \item \textbf{Distribution Visualization:} 
+    Add a histogram or CDF of soup outcomes (loss or accuracy change) to make the distribution immediately interpretable[cite: 72].
+    
+    \item \textbf{Transitivity Analysis:} 
+    Sharpen the analysis by characterizing \textit{when} transitivity fails (e.g., break down by similarity range or branching epoch)[cite: 73].
+    
+    \item \textbf{Graph Statistics:} 
+    Summarize the soupability graph structure using simple statistics (connected components, cluster sizes) or a short table, rather than relying solely on pairwise plots[cite: 74].
+\end{itemize}
+
+\section{Scope and Generalization}
+\begin{itemize}[label=$\square$]
+    \item \textbf{Generalization Experiment (Strong Preference):} 
+    Run a lightweight extra setting (e.g., ResNet-18 or a second dataset) to strengthen claims about generality[cite: 76].
+    
+    \item \textbf{Alternative Discussion (If Exp. Not Possible):} 
+    Add a discussion section predicting which findings will transfer to other architectures/pretrained settings and which might be scale-dependent[cite: 77].
+\end{itemize}
+
+\section{Minor and Reproducibility Requests}
+\begin{itemize}[label=$\square$]
+    \item \textbf{Reporting Details:} 
+    Report the exact number of runs/seeds per condition and provide details on the bootstrap method used[cite: 79].
+
+    
+    \item \textbf{Code Availability:} 
+    Ensure code and training logs are organized and easy to run for reproducing the main figures[cite: 80].
+    
+    \item \textbf{Midpoint Clarification:} 
+    Clarify the choice to use midpoint-only averaging and note the limitations of not exploring weighted soups[cite: 81].
+    
+    \item \textbf{Rebasin Failure Analysis:} 
+    Expand the appendix analysis to show if catastrophic permutation failures concentrate by layer, epoch, or variant[cite: 82].
+\end{itemize}
+
+\end{document}

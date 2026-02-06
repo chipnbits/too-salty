@@ -6,7 +6,7 @@
 
 \citet{soups} introduced the idea of \emph{souping} by showing that averaging the model parameters produced by different fine-tuning trajectories often leads to better generalization than any individual ingredient. This not only captures the benefit of multiple adaptation paths but also introduces an additional adaptive mechanism, as \citet{seasoningsoups} suggest that dynamically adjusting soup weights enables intermediate behaviours that can better match a range of distributional shifts. In contrast to ensembling which combines the \textit{outputs} of models, souping does not increase the computational cost of inference, requiring only a single forward pass.
 
-\citet{soups} hypothesise that souping works because fine-tuned models often lie in the same low-loss basin. The convex combination of their weights is expected to remain in the basin while reducing variance introduced by a noisy training procedure. They find that when the angle formed by the pre-trained model and the two models to be souped is larger, implying greater diversity, there is a greater performance boost from souping. Understanding why such averaging remains in low-loss regions, how diversity among fine-tuned models contributes to robustness, and when souping is beneficial is therefore essential for studying adaptation more broadly. Averaging models that have not settled into a shared basin can lead to catastrophic performance degradation or ``model collapse'', motivating our investigation into identifying this transition. 
+\citet{soups} hypothesise that souping works because fine-tuned models often lie in the same low-loss basin. The convex combination of their weights is expected to remain in the basin while reducing variance introduced by a noisy training procedure. They find that when the angle formed by the pre-trained model and the two models to be souped is larger, implying greater diversity, there is a greater performance boost from souping. Understanding why such averaging remains in low-loss regions, how diversity among fine-tuned models contributes to robustness, and when souping is beneficial is therefore essential for studying adaptation more broadly. Averaging models that have not settled into a shared basin can lead to catastrophic performance degradation or ``model collapse'' where , motivating our investigation into identifying this transition. 
 
 \subsection{Related Work}
 
@@ -26,8 +26,6 @@
 \subsection{Our Contributions}
 
 Following these works, we seek to better understand souping by conducting a series of experiments addressing the following questions:
-
-\textbf{How much shared training is required to avoid collapse?} We systematically vary the number of shared pre-training epochs before splitting into fine-tuned variants to empirically map the transition from model collapse (the failure region) to effective souping (the stability region).
 
 \textbf{How much shared training is required for souping to be effective?} We investigate varying the number of shared pre-training epochs before splitting into fine-tuned variants to empirically map the transition from model collapse to effective souping.\\
 %  Models trained from the same pre-trained checkpoint can soup effectively, but how much shared training is required?\\We investigate varying the number of shared pre-training epochs before splitting into fine-tuned variants.
