@@ -25,14 +25,14 @@ We align all $5,346$ pairs of models using \texttt{rebasin} and compute the soup
 \newpage
 \subsection{Training Details for CIFAR-100 with ResNet-50}
 
-\begin{figure}[t]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.8\linewidth]{./figures/branching_models.drawio.pdf}
     \caption{Branching of fine-tuned models from baseline checkpoints. A single baseline model is trained, with checkpoints saved every 10 epochs. From each checkpoint, 4 variants are trained with different optimizer hyper-parameter perturbations.}\label{fig:evolution}
     % \Description{A diagram showing the branching of fine-tuned models from baseline checkpoints. A single baseline model is trained, with checkpoints saved every 10 epochs. From each checkpoint, 4 variants are trained with different optimizer hyper-parameter perturbations.}
 \end{figure}
 
-\begin{table}[t]
+\begin{table}[H]
 \centering
 
 
@@ -49,7 +49,7 @@ Model 4 & 0.5373 & 0.8594 & 0.9078 \\
 \caption{Optimizer perturbation scales applied during finetuning from the baseline ResNet-50 checkpoint on CIFAR-100. Each model scales the original SGD hyperparameters multiplicatively.}\label{tab:optimizer_perturbations}
 \end{table}
 
-\begin{table}[t]
+\begin{table}[H]
 \centering
 
 \begin{tabular}{lll}
@@ -112,7 +112,7 @@ Training
 \clearpage
 \subsection{Further Details on Experiments}
 
-\begin{figure}[t]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/soup_gain_vs_all_metrics.png}
     \caption{Soup gain vs various similarity and distance metrics between pairs of models. Each subplot shows the soup gain against one metric, with the Spearman correlation. All metrics perform similarly. We conclude that the more similar models are, the more likely souping is to not cause model collapse.}\label{fig:soup_gain_vs_all_metrics}
@@ -121,7 +121,7 @@ Training
     % \Description{A series of scatter plot figures showing soup gain against various similarity and distance metrics between pairs of models, with Spearman correlation values.}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/transitivity_min.png}
     \caption{Scatterplot of the soup gain of models $B$ and $C$ against the minimum soup gain of models $A$ with $B$ and $C$. Each point represents a triplet of models $(A, B, C)$. We observe a positive Spearman correlation of 0.64, suggesting that souping is fuzzily transitive. The correlation with the mean soup gain is lower, at 0.49.}
@@ -129,7 +129,7 @@ Training
     % \Description{A scatter plot figure showing the soup gain of models B and C against the minimum soup gain of models A with B and C.}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/soup_test_vs_corrupted.png}
     \caption{Scatterplot of the soup gain on test vs corrupted data. There is a clear sub-linear trend with strong correlation. Such a close relationship is sensitive to the nature of the distribution shift. This plot mostly shows that when model collapse occurs on the original test set, it also occurs on the corrupted data.}
@@ -137,7 +137,7 @@ Training
     % \Description{A scatter plot figure showing the soup gain on test vs corrupted data.}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/soup_positive_gain_prob.pdf}
     \caption{Probability of positive gain for soups as a function of the number of shared epochs. We see that the probability of positive gain increases with the number of shared epochs, for both clean and corrupted data. However,the corrupted data consistently has a slightly lower probability of positive gain. Thus, while souping also helps on corrupted data, it is slightly less effective than on clean data.}
@@ -145,7 +145,7 @@ Training
     % \Description{A line plot figure showing probability of positive gain for soups as a function of the number of shared epochs, for both clean and corrupted data.}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.5\linewidth]{./figures/soup_test_vs_corrupted_pos_soups.png}
   \caption{Plot of soup gain on test vs corrupted data for only models with positive soup gain on the test set. Spearman correlation of 0.61. 
@@ -154,7 +154,7 @@ Training
   % \Description{A scatter plot figure showing soup gain on test vs corrupted data for only models with positive soup gain on the test set.}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/soup_robustness_cdf.png}
     \caption{CDF of the difference in \emph{robustness gap} before and after souping. The robustness gap is defined as the difference in loss between the test set and the corrupted set. The robustness gap before souping is taken as the minimum robustness gap of the parents. We see a fairly symmetric distribution. It has mean -0.04 and median 0.02. We therefore conclude that souping does not systematically improve the robustness gap.}
@@ -162,6 +162,42 @@ Training
     % \Description{A line plot figure showing CDF of the difference in robustness gap before and after souping.}
 \end{figure}
 
+\subsection{SWA Experiment Runs}\label{appendix:SWA_results}
+Baseline training was performed using the same hyper-parameters as in \ref{tab:hyperparams_baseline} and using the top validation model. We compare to SWA starting at epoch 220 from the same base model. The initialization and batch ordering seeds with full results are shown below in \ref{tab:swa_results}.
+
+\begin{table}[H]
+\centering
+\setlength{\tabcolsep}{3.5pt}
+
+\begin{tabular}{lcccccc|cccccc}
+\toprule
+& \multicolumn{6}{c}{\textbf{Clean Data}} & \multicolumn{6}{c}{\textbf{Corrupted Data}} \\
+\cmidrule(lr){2-7} \cmidrule(lr){8-13}
+& \multicolumn{3}{c}{Accuracy ($\uparrow$)} & \multicolumn{3}{c}{Loss ($\downarrow$)} & \multicolumn{3}{c}{Accuracy ($\uparrow$)} & \multicolumn{3}{c}{Loss ($\downarrow$)} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13}
+Seed & Base & SWA & $\Delta$ & Base & SWA & $\Delta$ & Base & SWA & $\Delta$ & Base & SWA & $\Delta$ \\
+\midrule
+42 & 78.39 & 79.84 & \textbf{+1.45} & 1.02 & 0.90 & \textbf{-0.12} & 50.88 & 54.05 & \textbf{+3.17} & 2.37 & 2.63 & +0.26 \\
+43 & 78.04 & 79.81 & \textbf{+1.77} & 1.03 & 0.87 & \textbf{-0.16} & 50.82 & 54.47 & \textbf{+3.65} & 2.35 & 2.51 & +0.16 \\
+44 & 78.87 & 80.64 & \textbf{+1.77} & 1.00 & 0.86 & \textbf{-0.14} & 51.31 & 55.26 & \textbf{+3.95} & 2.36 & 2.57 & +0.21 \\
+45 & 78.57 & 80.18 & \textbf{+1.61} & 1.00 & 0.86 & \textbf{-0.14} & 50.76 & 54.59 & \textbf{+3.83} & 2.39 & 2.60 & +0.21 \\
+46 & 78.04 & 79.42 & \textbf{+1.38} & 1.02 & 0.89 & \textbf{-0.13} & 51.06 & 54.46 & \textbf{+3.40} & 2.35 & 2.57 & +0.22 \\
+47 & 78.47 & 80.38 & \textbf{+1.91} & 1.01 & 0.88 & \textbf{-0.13} & 51.51 & 55.28 & \textbf{+3.77} & 2.35 & 2.56 & +0.21 \\
+48 & 78.21 & 79.85 & \textbf{+1.64} & 1.02 & 0.90 & \textbf{-0.12} & 50.37 & 54.29 & \textbf{+3.92} & 2.40 & 2.62 & +0.22 \\
+49 & 78.57 & 80.27 & \textbf{+1.70} & 1.01 & 0.88 & \textbf{-0.13} & 51.62 & 56.05 & \textbf{+4.43} & 2.33 & 2.44 & +0.11 \\
+50 & 78.97 & 79.88 & \textbf{+0.91} & 1.00 & 0.89 & \textbf{-0.11} & 51.59 & 55.00 & \textbf{+3.41} & 2.34 & 2.56 & +0.22 \\
+51 & 78.09 & 79.87 & \textbf{+1.78} & 1.03 & 0.89 & \textbf{-0.14} & 51.52 & 55.25 & \textbf{+3.73} & 2.32 & 2.52 & +0.20 \\
+52 & 78.48 & 79.86 & \textbf{+1.38} & 1.02 & 0.89 & \textbf{-0.13} & 51.05 & 54.22 & \textbf{+3.17} & 2.37 & 2.65 & +0.28 \\
+53 & 78.55 & 80.26 & \textbf{+1.71} & 1.02 & 0.88 & \textbf{-0.14} & 51.77 & 55.42 & \textbf{+3.65} & 2.31 & 2.50 & +0.19 \\
+\midrule
+Mean & 78.44 & 80.02 & \textbf{+1.58} & 1.01 & 0.88 & \textbf{-0.13} & 51.19 & 54.86 & \textbf{+3.67} & 2.35 & 2.56 & +0.21 \\
+Std & 0.30 & 0.33 & 0.27 & 0.01 & 0.01 & 0.01 & 0.43 & 0.60 & 0.36 & 0.03 & 0.06 & 0.04 \\
+\bottomrule
+\end{tabular}
+
+
+\caption{Training hyperparameters for CIFAR-100 with ResNet-50.}\label{tab:swa_results}
+\end{table}
 
 
 \subsection{Details for Model Embedding Creation}\label{sec:model_embedding_creation}
