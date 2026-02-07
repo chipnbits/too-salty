@@ -114,6 +114,36 @@ Training
 
 \begin{figure}[H]
     \centering
+    \includegraphics[width=0.5\linewidth]{./figures/soup_gain_quantiles_vs_shared_epochs_with_ci.pdf}
+    \caption{Quantiles of soup gain vs shared epochs with soup gain measured as the reduction in loss vs the best parent. Similar to the conclusions from~\ref{fig:soup_gain_probabilities}, we find model collapse almost never occurs past shared epochs 250.}\label{fig:soup_gain_quantiles_loss}
+    \includegraphics[width=0.5\linewidth]{./figures/combined_prob_and_conditional_gain_with_ci.pdf}
+    \caption{Probability of positive soup gain and conditional expected gain vs shared epochs. We find that the expected soup gain noisy, but is maximised in an ideal window of shared epochs. Past this point, and models are too similar, leading to minimal gains. Before this point, models are incompatible and rarely yield positive gain.}\label{fig:soup_gain_conditional_exp}
+    % \Description{A series of scatter plot figures showing soup gain against various similarity and distance metrics between pairs of models, with Spearman correlation values.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{./figures/model_collapse_vs_shared_epochs_with_ci.pdf}
+    \caption{We plot both the probability of model collapse and the probability that soup gain is positive over varying shared epochs, with 95\% bootstrapped confidence intervals. }\label{fig:model_collapse}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{./figures/shared_epochs_vs_kl_mean_std.pdf}
+    \caption{Shared epochs vs KL divergence. We plot the mean and standard deviation over each value of shared epochs. The full data has a Spearman correlation of $-0.67$. We conclude that we can noisily recover the number of shared epochs by measuring the KL divergence, and that model similarity can be controlled imprecisely by varying the number of shared epochs. }\label{fig:kl_shared_epochs}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{./figures/soup_gain_vs_all_metrics.png}
+    \caption{Soup gain vs various similarity and distance metrics between pairs of models. Each subplot shows the soup gain against one metric, with the Spearman correlation. All metrics perform similarly. We conclude that the more similar models are, the more likely souping is to not cause model collapse.}\label{fig:soup_gain_vs_all_metrics}
+    \includegraphics[width=0.5\linewidth]{./figures/soup_gain_vs_all_metrics_positive_soups.png}
+    \caption{Soup gain vs various similarity and distance metrics between pairs of models, for the subset of soups with positive soup gain. Each subplot shows the soup gain against one metric, with the Spearman correlation. Each metric correlates similarly with soup gain. We see that when models are very similar, soup gain is small, while more dissimilar models can yield larger soup gains.}\label{fig:soup_gain_vs_all_metrics_positive_soups}
+    % \Description{A series of scatter plot figures showing soup gain against various similarity and distance metrics between pairs of models, with Spearman correlation values.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
     \includegraphics[width=0.5\linewidth]{./figures/soup_gain_vs_all_metrics.png}
     \caption{Soup gain vs various similarity and distance metrics between pairs of models. Each subplot shows the soup gain against one metric, with the Spearman correlation. All metrics perform similarly. We conclude that the more similar models are, the more likely souping is to not cause model collapse.}\label{fig:soup_gain_vs_all_metrics}
     \includegraphics[width=0.5\linewidth]{./figures/soup_gain_vs_all_metrics_positive_soups.png}
