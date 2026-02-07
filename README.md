@@ -2,7 +2,7 @@
 
 ## Description
 
-A Model Souping project focused on alignment techniques. Work completed as part of CPSC 532X at the University of British Columbia.
+A Model Souping project focused on alignment techniques.
 
 **Background**
 - [Model Soups](https://arxiv.org/abs/2203.05482) is a technique for combining multiple neural network models by averaging their weights to improve performance.
