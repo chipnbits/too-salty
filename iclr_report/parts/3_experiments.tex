@@ -8,7 +8,7 @@ We train a baseline model for image classification on the CIFAR-100 dataset with
 
 \subsection{Shared Epochs and Soup Gain}
 
-We group the soups by the number of shared epochs between the two ingredients before they diverge into different training trajectories. For example, a pair of models branched form the baseline at epoch 50 and 100 respectively share 50 epochs. In Figure~\ref{fig:soup_gain_quantiles}, we plot quantiles of soup gain as a function of shared epochs. We observe the distribution of soup gains shifts positively as the number of shared epochs increases. However, the soup gain is often large and negative until around epoch 150. After epoch 250, nearly all soups are approximately neutral.
+We group the soups by the number of shared epochs between the two ingredients before they diverge into different training trajectories. For example, a pair of models branched form the baseline at epoch 50 and 100 respectively share 50 epochs. In Figure~\ref{fig:soup_gain_quantiles}, we observe the distribution of soup gains shifts positively as the number of shared epochs increases. However, the soup gain is often large and negative until around epoch 150. After epoch 250, nearly all soups are approximately neutral.
 
 % \begin{figure}[ht]
 %     \centering
