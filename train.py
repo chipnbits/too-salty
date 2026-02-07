@@ -374,6 +374,14 @@ if __name__ == "__main__":
     parser.add_argument("--swa-lr", type=float, default=0.05, help="SWA learning rate (default: 0.05)")
     args = parser.parse_args()
     config = load_config(args.config)
+    
+    seed = 42
+    random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    print(f"Locked global seed to: {seed}")
 
     # Set random seed for reproducibility
     if args.seed is not None:
