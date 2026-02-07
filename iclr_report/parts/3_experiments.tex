@@ -2,13 +2,14 @@
 
 \subsection{Method}
 
-We train a baseline model for image classification on the CIFAR-100 dataset with ResNet-50~\cite{resnet50} using a well-known set of hyper-parameters~\cite{cifar100params} with image reflection and random translation with padding for data augmentation. We hold out $5\%$ of the $50,000$ training images as a validation set, as well as $10,000$ images for testing. The baseline model is saved every 10 epochs. From each save point, we branch off and train $4$ new models with different optimizer settings. For details, see Appendix Tables~\ref{tab:optimizer_perturbations} and~\ref{tab:hyperparams_baseline}. All models are each trained to convergence, with the best validation scored model weights saved for the experiments. This process is illustrated in Figure~\ref{fig:evolution}. A total of $4$ variants and $26$ branch points were trained, yielding $104$ related models and $5,356$ binary souping combinations for analysis. 
+We train a baseline model for image classification on the CIFAR-100 dataset with ResNet-50~\cite{resnet50} using a well-known set of hyper-parameters~\cite{cifar100params} with image reflection and random translation with padding for data augmentation. We hold out $5\%$ of the $50,000$ training images as a validation set, as well as $10,000$ images for testing. The baseline model is saved every 10 epochs. From each save point, we branch off and train $4$ new models with different optimizer settings. For details, see Appendix Tables~\ref{tab:optimizer_perturbations} and~\ref{tab:hyperparams_baseline}. All models are each trained to convergence, with the best validation scored model weights saved for the experiments. This process is illustrated in Figure~\ref{fig:evolution}. A total of $4$ variants and $26$ branch points were trained, yielding $104$ related models and $5,356$ binary souping combinations for analysis. Finally, we train 12 baseline models with and without SWA applied to comparing the depth of fine-tuning with souping to the breadth of SWA, see Appendix~\ref{appendix:SWA_results}.
 
 % Our experiments are designed to recreate the effect of different fine-tuning trajectories, but with varying diversity of pre-trained model and length of fine-tuning.
 
 \subsection{Shared Epochs and Soup Gain}
 
 We group the soups by the number of shared epochs between the two ingredients before they diverge into different training trajectories. For example, a pair of models branched form the baseline at epoch 50 and 100 respectively share 50 epochs. In Figure~\ref{fig:soup_gain_quantiles}, we observe the distribution of soup gains shifts positively as the number of shared epochs increases. However, the soup gain is often large and negative until around epoch 150. After epoch 250, nearly all soups are approximately neutral.
+
 
 % \begin{figure}[ht]
 %     \centering
@@ -100,7 +101,7 @@ Following transitivity, we investigate whether there are clusters of models that
 
 \subsection{Souping for Robustness to Corruption}
 
-All experiments thus far have measured soup gain on a held-out test set. However, souping has also been used for robustness to distribution shift~\citep{seasoningsoups}. To establish whether souping for in-distribution performance also increases out-of-distribution performance, we compute the soup gain on CIFAR-100C~\citep{cifar100c} with severity level 3. The soup gains on test and corrupted data correlate very well, with a Spearman correlation of 0.99. A scatterplot can be found in Figure~\ref{fig:test_vs_corrupted}. The positive trend still holds when conditioning on only soups with positive soup gain on the test set, with a Pearson correlation of $0.61$. A plot can be found in Figure~\ref{fig:test_vs_corrupted_pos}. In-distribution performance improvement transfers to unseen target distributions.
+All experiments thus far have measured soup gain on a held-out test set. However one of our primary robustness to distribution shift~\citep{seasoningsoups}. To establish whether souping for in-distribution performance also increases out-of-distribution performance, we compute the soup gain on CIFAR-100C~\citep{cifar100c} with severity level 3. The soup gains on test and corrupted data correlate very well, with a Spearman correlation of 0.99. A scatterplot can be found in Figure~\ref{fig:test_vs_corrupted}. The positive trend still holds when conditioning on only soups with positive soup gain on the test set, with a Pearson correlation of $0.61$. A plot can be found in Figure~\ref{fig:test_vs_corrupted_pos}. In-distribution performance improvement transfers to unseen target distributions.
 
 We also plot the probability of positive soup gain on corrupted data as a function of shared epochs in Figure~\ref{fig:soup_corrupted_positive_gain_prob}. The probability of positive gain increases with the number of shared epochs for both clean and corrupted data but the corrupted data always has a lower probability of positive gain.
 
