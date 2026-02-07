@@ -48,7 +48,7 @@ We train a baseline model for image classification on the CIFAR-100 dataset with
 
 In Figure~\ref{fig:soup_gain_cdf}, we plot the cumulative distribution function (CDF) of soup all soup gains. Many soups have extreme behavior, with $40\%$ of soups losing over 60\% and only $14\%$ with positive gain. There is also a sharp transition, with only $15\%$ soups between $-70\%$ and $-20\%$ gain. 
 
-We next group the soups by the number of shared epochs before the ingredients diverge into different training trajectories. For example, a pair of models branched from epoch 50 and 100 share 50 epochs. We plot the probability that a soup has gain greater than $k\%$ for varying $k$ with bootstrapped 95\%confidence intrevals (CIs) in Figure~\ref{fig:soup_gain_probabilities}. The probability of positive soup gain generally increases with shared epochs, reaching around $80\%$ after 260 shared epochs. At this point, almost no soups exhibit drop by more than $5\%$. However, for soup gain to be greater that $0.5\%$, the number of shared epochs cannot be too high either. Further analysis of the the mean soup gain for positive soups and gain measured in loss can be found in Appendices~\ref{fig:soup_gain_conditional_exp} and~\ref{fig:soup_gain_quantiles_loss}
+We next group the soups by the number of shared epochs before the ingredients diverge into different training trajectories. For example, a pair of models branched from epoch 50 and 100 share 50 epochs. We plot the probability that a soup has gain greater than $k\%$ for varying $k$ with bootstrapped 95\%confidence intrevals (CIs) in Figure~\ref{fig:soup_gain_probabilities}. The probability of positive soup gain generally increases with shared epochs, reaching around $80\%$ after 260 shared epochs. At this point, almost no soups exhibit drop by more than $5\%$. However, for soup gain to be greater that $0.5\%$, the number of shared epochs cannot be too high either. Further analysis of the the mean soup gain for positive soups, gain measured in loss and model collapse can be found in Appendices~\ref{fig:soup_gain_conditional_exp}, ~\ref{fig:soup_gain_quantiles_loss} and~\ref{fig:model_collapse}.
  
 \begin{figure}[ht]
   \centering
@@ -118,8 +118,7 @@ If model $A$ soups successfully with models $B$ and $C$, will $B$ and $C$ also s
   \end{minipage}
 \end{figure}
 
-
-Following transitivity, we investigate whether there are clusters of models that soup well together. We embed our $104$ models into 2D using soup gain as a distance metric and plot them in Figure~\ref{fig:model_embedding}. The details of generating this plot can be found in Section~\ref{sec:model_embedding_creation}. We find that most successful soups lie in a single cluster of models all branched from later on in the training procedure. We conclude that souping is approximately transitive. There are many counter-examples, but this work supports the idea that, in general, soups lie in a single loss basin.
+Following transitivity, we investigate whether there are clusters of models that soup well together. We embed our $104$ models into 2D using soup gain as a distance metric and plot them in Figure~\ref{fig:model_embedding}. The details of generating this plot can be found in Section~\ref{sec:model_embedding_creation}. We find all most successful soups form the edges of a single connected component of models, while there are is a single dense cluster of models which are largely branched from later on in the training procedure. We conclude that souping is moderatively transitive. There are many counter-examples, but this work supports the idea that, in general, soups lie in a single loss basin.
 
 \subsection{Souping for Robustness to Corruption}
 
