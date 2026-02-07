@@ -13,7 +13,7 @@ Following the work from~\citet{gitrebasin}, we investigate whether permuting the
 
 We align all $5,346$ pairs of models using \texttt{rebasin} and compute the soup gain after alignment. Prior to permutation, $14.25\%$ of soups were positive, while after permutation, $14.32\%$ of soups were positive. However, $7\%$ of soups obtained a loss higher than $5$, which is worse than the loss of any previous soup. We plot the cumulative distribution function (CDF) of the difference in soup gain before and after permutation in Figure~\ref{fig:permutated_vs_soup_gain_cdf}. This plot shows that while permuting can sometimes help, it does not do so consistently. Further, the median difference in soup gain is approximately zero, indicating that permuting does not have a significant effect on the effectiveness of souping in our experiments. There also remains a significant risk of severe degradation. Thus, we conclude that `matching weights' permutation does not make a noticeable different to soupability in our setting.
 
-\begin{figure}[t]
+\begin{figure}[tb]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/permutated_vs_soup_gain_cdf.pdf}
     \caption{Cumulative distribution function (CDF) of the difference in soup gain before and after permutation alignment using \texttt{rebasin}. This ignores the $7\%$ of soups with a loss higher than 5 after permutation as these make the plot difficult to interpret. The remaining mean and median difference is approximately zero, indicating that permutation alignment does not have a significant effect on the effectiveness of souping in our experiments. While some soups benefit from permutation alignment, others are negatively affected, leading to an overall negligible impact while there is a risk of severe degradation.}
@@ -25,14 +25,14 @@ We align all $5,346$ pairs of models using \texttt{rebasin} and compute the soup
 \newpage
 \subsection{Training Details for CIFAR-100 with ResNet-50}
 
-\begin{figure}[H]
+\begin{figure}[tb]
     \centering
     \includegraphics[width=0.8\linewidth]{./figures/branching_models.drawio.pdf}
     \caption{Branching of fine-tuned models from baseline checkpoints. A single baseline model is trained, with checkpoints saved every 10 epochs. From each checkpoint, 4 variants are trained with different optimizer hyper-parameter perturbations.}\label{fig:evolution}
     % \Description{A diagram showing the branching of fine-tuned models from baseline checkpoints. A single baseline model is trained, with checkpoints saved every 10 epochs. From each checkpoint, 4 variants are trained with different optimizer hyper-parameter perturbations.}
 \end{figure}
 
-\begin{table}[H]
+\begin{table}[tb]
 \centering
 
 
@@ -84,7 +84,7 @@ Training
 & Mixed precision     & No \\
 \bottomrule
 \end{tabular}
-\caption{Training hyperparameters for CIFAR-100 with ResNet-50.}\label{tab:hyperparams_baseline}
+\caption{Training hyperparameters for CIFAR-100 with ResNet-50. A randomization seed of 42 is used unless otherwise specified.}\label{tab:hyperparams_baseline}
 \end{table}
 
 % Model 4
@@ -159,6 +159,42 @@ Training
     % \Description{A scatter plot figure showing the soup gain of models B and C against the minimum soup gain of models A with B and C.}
 \end{figure}
 
+\begin{table}[t]
+\centering
+\begin{minipage}{0.48\linewidth}
+\centering
+\caption{Transitivity failure vs shared epochs over all (A,B,C). $n$ is the number of triples within that bin where two edges soup together positively. $p_{\text{fail}}$ denotes the proportion of triples where two edges soup together positively, but the third edge does not. Larger and smaller values of shared epochs have smaller failure rates but there is no clear trend.}
+\begin{tabular}{lrr}
+\toprule
+Shared epochs (ABC) & $n$ & $p_{\text{fail}}$ \\
+\midrule
+150--180 & 2294 & 0.071 \\
+180--200 & 1887 & 0.075 \\
+200--220 & 1657 & 0.119 \\
+220--240 & 1244 & 0.104 \\
+240--300 & 1369 & 0.055 \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\linewidth}
+\centering
+\caption{Transitivity failure vs epoch difference ($|B{-}C|$). We fix within the [200,2]}
+\begin{tabular}{lrr}
+\toprule
+Epoch diff (BC) & $n$ & $p_{\text{fail}}$ \\
+\midrule
+0--10   & 792 & 0.124 \\
+10--20  & 497 & 0.123 \\
+20--30  & 419 & 0.124 \\
+30--50  & 578 & 0.080 \\
+50--100 & 369 & 0.100 \\
+\bottomrule
+\end{tabular}
+\end{minipage}
+\end{table}
+
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/soup_test_vs_corrupted.png}
@@ -226,8 +262,19 @@ Std & 0.30 & 0.33 & 0.27 & 0.01 & 0.01 & 0.01 & 0.43 & 0.60 & 0.36 & 0.03 & 0.06
 \end{tabular}
 
 
-\caption{Training hyperparameters for CIFAR-100 with ResNet-50.}\label{tab:swa_results}
+\caption{Comparison of basline and SWA models branching from Epoch 220.}\label{tab:swa_results}
 \end{table}
+
+\subsection{Binary Model Soup Accuracy Curves}
+While our experiments make a statistical analysis on the characteristics of even-weighted binary soups, we verify the validity of our simplifying assumptions with characteristic accuracy curves across $16$ binary pairs to support our claim that even-weighted soups are a good measure for performance. For soups exhibiting model collapse, the measure is much more accurate, while for positive gain soups the metric is indicative of soupability but not as accurate for actual souping gain.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{./figures/alpha_sweep_grid.png}
+    \caption{Souping characteristics across a range of parameter interpolation values for 16 models.}
+    \label{fig:soup_weghts}
+    % \Description{16 plots showing the accuracy across interpolation weights for both successful and collapsed soups.}
+\end{figure}
 
 
 \subsection{Details for Model Embedding Creation}\label{sec:model_embedding_creation}
