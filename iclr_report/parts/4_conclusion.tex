@@ -1,9 +1,17 @@
 \section{Conclusion}
 
-In this work, we have conducted a series of experiments to further our understanding of souping. We find that ingredients must have sufficiently many shared epochs of training in order to be compatible but that too many shared epochs and the soup gain is minimal. We also find that various similarity measures between models correlate similarly with soup gain. Similar ingredients are less likely to collapse when souped, but very similar ingredients yield smaller soup gains. Thus, the right balance must be struck for the most effective souping. When souping, we encourage practitioners to test a range of similarities of ingredients to ensure they are finding an optimal soup. Our experiments showing that souping is mostly transitive support the low-loss basin hypothesis. Finally, we find that soup gains on in-distribution data are strongly correlated with those on corrupted data.
+We have tasted more soups to better understand souping.
+% In this work, we have conducted a series of experiments to further our understanding of souping.
+Ingredients must have sufficiently many shared epochs of training in order to be compatible, but not so many that the soup gain is minimal. 
+Various similarity measures between models correlate similarly with soup gain. 
+Similar ingredients are less likely to collapse when souped, but very similar ingredients yield smaller soup gains. 
+Thus, the right balance must be struck for the most effective souping. 
+When souping, we encourage practitioners to test a range of similarities of ingredients to ensure they are finding an optimal soup.
+Our experiments showing that souping is mostly transitive support the low-loss basin hypothesis. 
+Finally, soup gains on in-distribution data are strongly correlated with those on corrupted data.
 
 \textbf{Limitations}: We investigated ResNet-50 on CIFAR-100 to enable a comprehensive combinatorial analysis of over 5,000 binary soups that would be computationally prohibitive with large foundation models. \citet{transientperformancegains} demonstrated that the linear mode connectivity is a fundamental optimization property, suggesting our findings would transfer to larger-scale fine-tuning settings. Additionally, we only consider pairwise souping using the arithmetic mean at the midpoint for similar reasons. Other methods of souping, such as learned soups, may yield different results.
 
-\textbf{Future Work}: Future empirical work could conduct similar experiments in different settings, such as a variety of model architectures and datasets. Theory could be developed for souping in simpler settings like an overparameterized linear model or a shallow network. Theory could also be created to help predict the change in loss we expect from souping associated with noise reduction.
+\textbf{Future Work}: Future empirical work could conduct similar experiments in different settings, such as a variety of model architectures and datasets. Theory could be developed for souping in simpler settings like an overparameterized linear model or a shallow network. Theory could also be created to help predict the change in loss we expect from souping associated with noise reduction. Validating the performance of SWA against model stock estimates of the low-loss center could confirm if model souping remains a strong contender for test-time robustness under distribution shift. 
 
 % It could also center on comparing souping with other methods of weight averaging such as SWA.
