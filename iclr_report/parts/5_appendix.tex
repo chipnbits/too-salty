@@ -161,9 +161,11 @@ Training
 
 \begin{table}[t]
 \centering
-\begin{minipage}{0.48\linewidth}
-\centering
-\caption{Transitivity failure vs shared epochs over all (A,B,C). $n$ is the number of triples within that bin where two edges soup together positively. $p_{\text{fail}}$ denotes the proportion of triples where two edges soup together positively, but the third edge does not. Larger and smaller values of shared epochs have smaller failure rates but there is no clear trend.}
+\caption{Transitivity failure vs shared epochs over all $(A,B,C)$ triples. 
+Here $n$ denotes the number of triples in the bin for which two soups are positive, and 
+$p_{\text{fail}}$ is the proportion of those triples for which the remaining soup is negative. 
+Failure rates are lowest for very small and very large shared prefixes, with a peak at intermediate shared epochs, but no monotonic trend is observed.}
+\label{tab:shared_epoch_triples_transitivity}
 \begin{tabular}{lrr}
 \toprule
 Shared epochs (ABC) & $n$ & $p_{\text{fail}}$ \\
@@ -175,11 +177,15 @@ Shared epochs (ABC) & $n$ & $p_{\text{fail}}$ \\
 240--300 & 1369 & 0.055 \\
 \bottomrule
 \end{tabular}
-\end{minipage}
-\hfill
-\begin{minipage}{0.48\linewidth}
+\end{table}
+
+\begin{table}[t]
 \centering
-\caption{Transitivity failure vs epoch difference ($|B{-}C|$). We fix within the [200,2]}
+\caption{Transitivity failure vs branching-epoch difference $|B{-}C|$. 
+Here $n$ and $p_{\text{fail}}$ are defined as in Table~\ref{tab:shared_epoch_triples_transitivity}. 
+We restrict to triples with shared epochs in $[200,220]$, fix the lowest-epoch model, and vary the branching-epoch difference of the remaining two models. 
+We observe no clear dependence of transitivity failure on epoch difference within this regime. Similar trends were observed for the other bins which are omitted for brevity.}
+\label{tab:epoch_diff_triples_transitivity}
 \begin{tabular}{lrr}
 \toprule
 Epoch diff (BC) & $n$ & $p_{\text{fail}}$ \\
@@ -191,8 +197,8 @@ Epoch diff (BC) & $n$ & $p_{\text{fail}}$ \\
 50--100 & 369 & 0.100 \\
 \bottomrule
 \end{tabular}
-\end{minipage}
 \end{table}
+
 
 
 \begin{figure}[H]
@@ -268,7 +274,7 @@ Std & 0.30 & 0.33 & 0.27 & 0.01 & 0.01 & 0.01 & 0.43 & 0.60 & 0.36 & 0.03 & 0.06
 \subsection{Binary Model Soup Accuracy Curves}
 While our experiments make a statistical analysis on the characteristics of even-weighted binary soups, we verify the validity of our simplifying assumptions with characteristic accuracy curves across $16$ binary pairs to support our claim that even-weighted soups are a good measure for performance. For soups exhibiting model collapse, the measure is much more accurate, while for positive gain soups the metric is indicative of soupability but not as accurate for actual souping gain.
 
-\begin{figure}[H]
+\begin{figure}[tb]
     \centering
     \includegraphics[width=0.95\linewidth]{./figures/alpha_sweep_grid.png}
     \caption{Souping characteristics across a range of parameter interpolation values for 16 models.}
