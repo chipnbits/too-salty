@@ -33,11 +33,11 @@ scheduler: # MultiStepLR, StepLR, CosineAnnealingLR, None
   name: "CosineAnnealingLR"
   milestones: [100, 150]  # For MultiStepLR
   step_size: 30          # For StepLR
-  T_max: 300            # For CosineAnnealingLR
+  T_max: 300          # For CosineAnnealingLR
   eta_min: 0            # For CosineAnnealingLR
   gamma: 0.2
 
 logging:
   log_interval: 50      # log to wandb every N training steps
   val_interval: 1       # run validation every N epochs
-  checkpoint_interval: 50 # spacing to save model checkpoints (in epochs)
+  checkpoint_interval: 10 # spacing to save model checkpoints (in epochs)
