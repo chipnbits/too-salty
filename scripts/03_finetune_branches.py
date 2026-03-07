@@ -1,22 +1,27 @@
-"""Finetune multiple models from a common checkpoint with varied optimizer hyperparameters.
+"""Finetune model variants from baseline checkpoints with scaled optimizer hyperparameters.
 
-This script loads a trained checkpoint and continues training multiple models with
-randomized optimizer hyperparameters (learning rate, momentum, weight decay).
-Each model diverges from the common starting point with different training dynamics.
-
-This step is parallelizable: each checkpoint can be processed independently.
+Each variant branches from a checkpoint and trains to completion with perturbed
+learning rate, momentum, and weight decay. Scales are defined in a variants config
+(e.g., configs/resnet50_finetune.yaml) or can be generated randomly.
 
 Usage:
-    python scripts/03_finetune_branches.py --checkpoint models/.../epoch_50.pt --num-models 4
-    python scripts/03_finetune_branches.py --checkpoint-dir models/.../checkpoints/
+    # Single model from single checkpoint:
+    python scripts/03_finetune_branches.py --checkpoint models/.../epoch_50.pt --model-idx 1
+
+    # All models from single checkpoint:
+    python scripts/03_finetune_branches.py --checkpoint models/.../epoch_50.pt
+
+    # All models from all checkpoints in a directory:
+    python scripts/03_finetune_branches.py --checkpoint-dir models/.../baseline-resnet50/
+
+    # Generate random scales instead of using config:
+    python scripts/03_finetune_branches.py --checkpoint ... --random-scales --num-models 4
 """
 
 import argparse
 import os
 from copy import deepcopy
 
-import numpy as np
-import torch
 import torch.nn as nn
 from dotenv import load_dotenv
 
@@ -26,7 +31,9 @@ from salty.models import get_model_from_config
 from salty.training import (
     build_optimizer,
     build_scheduler,
+    generate_random_scales,
     get_device,
+    scale_optimizer,
     train_loop,
 )
 from salty.utils import load_checkpoint, load_checkpoint_config, load_config, set_seed
@@ -37,299 +44,177 @@ MODEL_DIR = os.getenv("MODEL_DIR", "./models")
 DATA_DIR = os.getenv("DATA_DIR", "./data")
 
 
-def randomize_optimizer_hyperparams(
-    optimizer, lr_scale_range=1.0, momentum_scale_range=1.0, wd_scale_range=1.0, seed=None
-):
-    """
-    Randomize optimizer hyperparameters by scaling them with uniform random multipliers.
-
-    Args:
-        optimizer: PyTorch optimizer instance
-        lr_scale_range: Maximum scale factor for learning rate (uniform in [1-range, 1+range])
-        momentum_scale_range: Maximum scale factor for momentum (uniform in [1-range, 1+range])
-        wd_scale_range: Maximum scale factor for weight decay (uniform in [1-range, 1+range])
-        seed: Random seed for reproducibility
-
-    Returns:
-        Dictionary with original and new hyperparameters
-    """
-    if seed is not None:
-        rng = np.random.RandomState(seed)
-    else:
-        rng = np.random.RandomState()
-
-    def log_uniform_scale(scale_range):
-        log_scale = rng.uniform(0.2 * scale_range, scale_range)
-        random_sign = rng.choice([-1, 1])
-        log_scale *= random_sign
-        return 2**log_scale
-
-    lr_new = optimizer.param_groups[0]["lr"] * log_uniform_scale(lr_scale_range)
-    momentum_new = optimizer.param_groups[0].get("momentum", 0.9) * log_uniform_scale(momentum_scale_range)
-    wd_new = optimizer.param_groups[0].get("weight_decay", 0.0) * log_uniform_scale(wd_scale_range)
-
-    original_params = {}
-    new_params = {}
-
-    for group_idx, param_group in enumerate(optimizer.param_groups):
-        # Store original hyperparameters
-        original_params[group_idx] = {
-            "lr": param_group["lr"],
-            "momentum": param_group.get("momentum", None),
-            "weight_decay": param_group.get("weight_decay", None),
-        }
-
-        # Update hyperparameters
-        param_group["lr"] = lr_new
-        if "momentum" in param_group:
-            param_group["momentum"] = momentum_new
-        if "weight_decay" in param_group:
-            param_group["weight_decay"] = wd_new
-
-        # Store new hyperparameters
-        new_params[group_idx] = {
-            "lr": param_group["lr"],
-            "momentum": param_group.get("momentum", None),
-            "weight_decay": param_group.get("weight_decay", None),
-        }
-
-    return {
-        "original": original_params,
-        "new": new_params,
-        "scales": {
-            "lr_scale": lr_new / original_params[0]["lr"],
-            "momentum_scale": (
-                (momentum_new / original_params[0]["momentum"]) if original_params[0]["momentum"] is not None else None
-            ),
-            "wd_scale": (
-                (wd_new / original_params[0]["weight_decay"])
-                if original_params[0]["weight_decay"] is not None
-                else None
-            ),
-        },
-    }
-
-
-def finetune_from_checkpoint(
+def finetune_single_model(
     checkpoint_path,
-    num_models,
-    lr_scale_range=1.0,
-    momentum_scale_range=1.0,
-    wd_scale_range=1.0,
+    model_idx,
+    lr_scale,
+    momentum_scale,
+    wd_scale,
     device=None,
-    base_seed=42,
-    model_save_idx=0,
+    seed=42,
 ):
-    """
-    Finetune multiple models from a common checkpoint with varied optimizer hyperparameters.
+    """Finetune a single model variant from a checkpoint with explicit scales.
 
     Args:
-        checkpoint_path: Path to checkpoint file to load
-        num_models: Number of models to train from the checkpoint
-        lr_scale_range: Max random log scale range for learning rate (default: 1.0 = 100%)
-        momentum_scale_range: Max random log scale range for momentum (default: 1.0 = 100%)
-        wd_scale_range: Max random log scale range for weight decay (default: 1.0 = 100%)
-        device: Device to train on (cuda/cpu/mps), auto-detected if None
-        base_seed: Base random seed for reproducibility
-        model_save_idx: Starting index offset for saved model names
+        checkpoint_path: Path to baseline checkpoint
+        model_idx: Variant index (used for naming and seed offset)
+        lr_scale: Multiplicative scale for learning rate
+        momentum_scale: Multiplicative scale for momentum
+        wd_scale: Multiplicative scale for weight decay
+        device: Device to train on, auto-detected if None
+        seed: Random seed for this variant
     """
-
-    # Strip name from the .pt checkpoint file for saving
     checkpoint_name = os.path.splitext(os.path.basename(checkpoint_path))[0]
-    # Load checkpoint to get config
-    print(f"Loading base checkpoint from: {checkpoint_path}")
     base_config = load_checkpoint_config(checkpoint_path)
-
     device = get_device(device)
 
-    # Data loaders (same as original training)
-    train_loader, val_loader, test_loader = get_data_loaders(base_config, DATA_DIR)
+    model_seed = seed + model_idx
+    set_seed(model_seed)
 
-    # Train each model variant
-    for model_idx in range(num_models):
+    # Build model, optimizer, scheduler from config
+    model = get_model_from_config(base_config).to(device)
+    optimizer = build_optimizer(base_config["optimizer"], model)
+    scheduler = build_scheduler(base_config.get("scheduler", {}), optimizer)
+
+    # Load checkpoint weights and optimizer state
+    start_epoch, _, _, global_step, _ = load_checkpoint(
+        checkpoint_path, model, optimizer, scheduler, scaler=None
+    )
+
+    # Apply scales to optimizer hyperparameters
+    hp_info = scale_optimizer(optimizer, lr_scale, momentum_scale, wd_scale)
+
+    print(f"Model {model_idx} scales: LR={lr_scale:.4f}x, Momentum={momentum_scale:.4f}x, WD={wd_scale:.4f}x")
+    print(f"  LR: {hp_info['original'][0]['lr']:.6f} -> {hp_info['scaled'][0]['lr']:.6f}")
+    print(f"  Momentum: {hp_info['original'][0]['momentum']:.6f} -> {hp_info['scaled'][0]['momentum']:.6f}")
+    print(f"  WD: {hp_info['original'][0]['weight_decay']:.6f} -> {hp_info['scaled'][0]['weight_decay']:.6f}")
+
+    # Config for this finetune run
+    additional_epochs = base_config["training"].get("epochs", 300) - start_epoch + 10
+    ft_config = deepcopy(base_config)
+    ft_config["training"]["epochs"] = start_epoch + additional_epochs
+    ft_config["run_name"] = f"{checkpoint_name}_model_{model_idx}"
+    ft_config["logging"]["checkpoint_interval"] = 1000  # Only save best and last
+
+    # Data loaders
+    train_loader, val_loader, _ = get_data_loaders(base_config, DATA_DIR)
+
+    # wandb
+    wandb.init(
+        project=ft_config["project_name"],
+        name=ft_config["run_name"],
+        config={
+            **ft_config,
+            "finetune_from_checkpoint": checkpoint_path,
+            "finetune_start_epoch": start_epoch,
+            "finetune_model_idx": model_idx,
+            "finetune_seed": model_seed,
+            "hp_scales": {"lr": lr_scale, "momentum": momentum_scale, "wd": wd_scale},
+            "hp_original": hp_info["original"][0],
+            "hp_scaled": hp_info["scaled"][0],
+        },
+    )
+
+    save_dir = os.path.join(MODEL_DIR, ft_config["project_name"], ft_config["run_name"])
+
+    train_loop(
+        model,
+        train_loader,
+        val_loader,
+        nn.CrossEntropyLoss(label_smoothing=0.1),
+        optimizer,
+        scheduler,
+        device,
+        ft_config,
+        save_dir=save_dir,
+        start_epoch=start_epoch,
+        best_val_acc=0.0,
+        global_step=global_step,
+    )
+
+    wandb.finish()
+    print(f"Completed model {model_idx}")
+
+
+def run_variants(checkpoint_path, variants, device=None, seed=42, model_indices=None):
+    """Run finetune for selected variants from a single checkpoint.
+
+    Args:
+        checkpoint_path: Path to baseline checkpoint
+        variants: Dict mapping model_idx -> {lr_scale, momentum_scale, wd_scale}
+        device: Device to train on
+        seed: Base random seed
+        model_indices: If set, only run these variant indices. Otherwise run all.
+    """
+    indices = model_indices if model_indices is not None else sorted(variants.keys())
+
+    for idx in indices:
+        v = variants[idx]
         print(f"\n{'='*80}")
-        print(f"Training model {model_idx + 1}/{num_models}")
+        print(f"Variant {idx} from {os.path.basename(checkpoint_path)}")
         print(f"{'='*80}\n")
 
-        model_seed = base_seed + model_idx
-        set_seed(model_seed)
-
-        # Build model from config
-        model = get_model_from_config(base_config)
-        model = model.to(device)
-
-        # Build optimizer & scheduler
-        optimizer = build_optimizer(base_config["optimizer"], model)
-        scheduler = build_scheduler(base_config.get("scheduler", {}), optimizer)
-
-        # Load checkpoint for THIS model & optimizer
-        start_epoch, best_val_acc, loaded_cfg, global_step, wandb_run_id = load_checkpoint(
-            checkpoint_path, model, optimizer, scheduler, scaler=None
+        finetune_single_model(
+            checkpoint_path=checkpoint_path,
+            model_idx=idx,
+            lr_scale=v["lr_scale"],
+            momentum_scale=v["momentum_scale"],
+            wd_scale=v["wd_scale"],
+            device=device,
+            seed=seed,
         )
-
-        # Overwrite best to ensure saved model is from finetuning
-        best_val_acc = 0.0  # reset best
-
-        # Now randomize hyperparams
-        hp_changes = randomize_optimizer_hyperparams(
-            optimizer,
-            lr_scale_range=lr_scale_range,
-            momentum_scale_range=momentum_scale_range,
-            wd_scale_range=wd_scale_range,
-            seed=model_seed,
-        )
-
-        print(f"Optimizer hyperparameter randomization:")
-        print(f"  LR scale:     {hp_changes['scales']['lr_scale']:.4f}x")
-        print(f"  Momentum scale: {hp_changes['scales']['momentum_scale']:.4f}x")
-        print(f"  Weight decay scale: {hp_changes['scales']['wd_scale']:.4f}x")
-        print(f"  New LR:       {hp_changes['new'][0]['lr']:.6f}")
-        print(f"  New momentum: {hp_changes['new'][0]['momentum']:.6f}")
-        print(f"  New weight decay: {hp_changes['new'][0]['weight_decay']:.6f}")
-        print()
-
-        # Create modified config for this model
-        additional_epochs = base_config["training"].get("epochs", 300) - start_epoch + 10
-        finetune_config = deepcopy(base_config)
-        finetune_config["training"]["epochs"] = start_epoch + additional_epochs
-        finetune_config["project_name"] = base_config["project_name"]
-        finetune_config["run_name"] = f"{checkpoint_name}_model_{model_idx+1+model_save_idx}"
-        finetune_config["logging"]["checkpoint_interval"] = 1000  # Only save best and last
-
-        # Initialize wandb for this run
-        wandb.init(
-            project=finetune_config["project_name"],
-            name=finetune_config["run_name"],
-            config={
-                **finetune_config,
-                "finetune_from_checkpoint": checkpoint_path,
-                "finetune_start_epoch": start_epoch,
-                "finetune_model_idx": model_idx + model_save_idx,
-                "finetune_seed": model_seed,
-                "hp_scales": hp_changes["scales"],
-                "hp_original": hp_changes["original"][0],
-                "hp_new": hp_changes["new"][0],
-            },
-        )
-
-        # Loss function
-        train_loss_fn = nn.CrossEntropyLoss(label_smoothing=0.1)
-
-        save_dir = os.path.join(MODEL_DIR, finetune_config.get("project_name"), finetune_config.get("run_name"))
-
-        # Train this model
-        train_loop(
-            model,
-            train_loader,
-            val_loader,
-            train_loss_fn,
-            optimizer,
-            scheduler,
-            device,
-            finetune_config,
-            save_dir=save_dir,
-            start_epoch=start_epoch,
-            best_val_acc=best_val_acc,
-            global_step=global_step,
-        )
-
-        # Finish wandb run
-        wandb.finish()
-
-        print(f"\nCompleted model {model_idx + 1}/{num_models}")
-
-    print(f"\n{'='*80}")
-    print(f"Finetuning complete! Trained {num_models} models.")
-    print(f"{'='*80}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Finetune multiple models from a checkpoint with varied optimizer hyperparameters"
+        description="Finetune model variants from checkpoints with scaled optimizer hyperparameters"
     )
-    parser.add_argument("--checkpoint", type=str, required=False, help="Path to the checkpoint file to finetune from")
+    parser.add_argument("--checkpoint", type=str, help="Path to a single checkpoint to finetune from")
+    parser.add_argument("--checkpoint-dir", type=str, help="Directory of checkpoints (processes all .pt epoch files)")
     parser.add_argument(
-        "--num-models", type=int, default=2, help="Number of models to train from the checkpoint (default: 2)"
+        "--variants-config", type=str, default="configs/resnet50_finetune.yaml",
+        help="YAML file defining variant scales (default: configs/resnet50_finetune.yaml)",
     )
-    parser.add_argument(
-        "--epochs", type=int, default=50, help="Number of additional epochs to train each model (default: 50)"
-    )
-    parser.add_argument(
-        "--lr-scale",
-        type=float,
-        default=1.0,
-        help="Max random log scale range for learning rate, (default: 1.0 = 100%%)",
-    )
-    parser.add_argument(
-        "--momentum-scale",
-        type=float,
-        default=1.0,
-        help="Max random log scale range for momentum (default: 1.0 = 100%%)",
-    )
-    parser.add_argument(
-        "--wd-scale", type=float, default=1.0, help="Max random log scale range for weight decay (default: 1.0 = 100%%)"
-    )
-    parser.add_argument(
-        "--device",
-        type=str,
-        default=None,
-        help="Device to use for training (cuda/cpu/mps), auto-detected if not specified",
-    )
-    parser.add_argument("--seed", type=int, default=42, help="Base random seed for reproducibility (default: 42)")
+    parser.add_argument("--model-idx", type=int, default=None, help="Run only this variant index (for HPC single-job)")
+    parser.add_argument("--device", type=str, default=None, help="Device (cuda/cpu/mps), auto-detected if omitted")
+    parser.add_argument("--seed", type=int, default=42, help="Base random seed (default: 42)")
 
-    parser.add_argument(
-        "--checkpoint-dir",
-        type=str,
-        default=None,
-        help="Directory of checkpoints to finetune from (overrides --checkpoint, processes all .pt files)",
-    )
-    parser.add_argument(
-        "--model-save-idx",
-        type=int,
-        default=0,
-        help="Starting index offset for saved model names (default: 0)",
-    )
+    # Alternative: generate random scales instead of using config
+    parser.add_argument("--random-scales", action="store_true", help="Generate random scales instead of using config")
+    parser.add_argument("--num-models", type=int, default=4, help="Number of random variants to generate (default: 4)")
+    parser.add_argument("--scale-range", type=float, default=1.0, help="Log2 scale range for random generation (default: 1.0)")
+
     args = parser.parse_args()
 
+    # Load or generate variants
+    if args.random_scales:
+        scale_list = generate_random_scales(args.num_models, scale_range=args.scale_range, seed=args.seed)
+        variants = {i + 1: s for i, s in enumerate(scale_list)}
+        print(f"Generated {len(variants)} random scale variants:")
+        for idx, v in variants.items():
+            print(f"  Model {idx}: LR={v['lr_scale']:.4f}, Mom={v['momentum_scale']:.4f}, WD={v['wd_scale']:.4f}")
+    else:
+        variants_cfg = load_config(args.variants_config)
+        variants = {int(k): v for k, v in variants_cfg["variants"].items()}
+
+    # Select which model indices to run
+    model_indices = [args.model_idx] if args.model_idx is not None else None
+
+    # Collect checkpoints
     if args.checkpoint_dir is not None:
-        # Process all checkpoints in the directory
-        checkpoint_files = [f for f in os.listdir(args.checkpoint_dir) if f.endswith(".pt")]
+        checkpoint_files = sorted(
+            [f for f in os.listdir(args.checkpoint_dir) if f.endswith(".pt") and "epoch" in f],
+            key=lambda f: int(f.split("epoch_")[-1].split(".")[0]) if "epoch_" in f else -1,
+        )
 
-        def extract_epoch_num(filename):
-            try:
-                parts = filename.split("_")
-                epoch_str = parts[-1].split(".")[0]
-                return int(epoch_str)
-            except (IndexError, ValueError):
-                return -1
+        for ckpt_file in checkpoint_files:
+            ckpt_path = os.path.join(args.checkpoint_dir, ckpt_file)
+            run_variants(ckpt_path, variants, device=args.device, seed=args.seed, model_indices=model_indices)
 
-        checkpoint_files.sort(key=extract_epoch_num, reverse=True)
-
-        for checkpoint_file in checkpoint_files:
-            checkpoint_path = os.path.join(args.checkpoint_dir, checkpoint_file)
-            finetune_from_checkpoint(
-                checkpoint_path=checkpoint_path,
-                num_models=args.num_models,
-                lr_scale_range=args.lr_scale,
-                momentum_scale_range=args.momentum_scale,
-                wd_scale_range=args.wd_scale,
-                device=args.device,
-                base_seed=args.seed,
-                model_save_idx=args.model_save_idx,
-            )
-
-        print(f"Processed {len(checkpoint_files)} checkpoint files from {args.checkpoint_dir}")
+        print(f"\nProcessed {len(checkpoint_files)} checkpoints from {args.checkpoint_dir}")
 
     elif args.checkpoint is not None:
-        finetune_from_checkpoint(
-            checkpoint_path=args.checkpoint,
-            num_models=args.num_models,
-            lr_scale_range=args.lr_scale,
-            momentum_scale_range=args.momentum_scale,
-            wd_scale_range=args.wd_scale,
-            device=args.device,
-            base_seed=args.seed,
-            model_save_idx=args.model_save_idx,
-        )
+        run_variants(args.checkpoint, variants, device=args.device, seed=args.seed, model_indices=model_indices)
+
     else:
         parser.error("Either --checkpoint or --checkpoint-dir must be provided.")

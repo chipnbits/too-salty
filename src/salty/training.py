@@ -2,6 +2,7 @@
 
 import os
 
+import numpy as np
 import torch
 import torch.optim as optim
 from torch.optim.lr_scheduler import MultiStepLR
@@ -295,3 +296,71 @@ def get_device(config_device=None):
             device = "cpu"
     print(f"Using device: {device}")
     return device
+
+
+def scale_optimizer(optimizer, lr_scale=1.0, momentum_scale=1.0, wd_scale=1.0):
+    """Apply multiplicative scales to optimizer hyperparameters.
+
+    Args:
+        optimizer: PyTorch optimizer instance
+        lr_scale: Multiplicative factor for learning rate
+        momentum_scale: Multiplicative factor for momentum
+        wd_scale: Multiplicative factor for weight decay
+
+    Returns:
+        Dict with original and scaled hyperparameters
+    """
+    original = {}
+    scaled = {}
+
+    for group_idx, param_group in enumerate(optimizer.param_groups):
+        original[group_idx] = {
+            "lr": param_group["lr"],
+            "momentum": param_group.get("momentum", None),
+            "weight_decay": param_group.get("weight_decay", None),
+        }
+
+        param_group["lr"] *= lr_scale
+        if "momentum" in param_group:
+            param_group["momentum"] *= momentum_scale
+        if "weight_decay" in param_group:
+            param_group["weight_decay"] *= wd_scale
+
+        scaled[group_idx] = {
+            "lr": param_group["lr"],
+            "momentum": param_group.get("momentum", None),
+            "weight_decay": param_group.get("weight_decay", None),
+        }
+
+    return {"original": original, "scaled": scaled}
+
+
+def generate_random_scales(num_variants, scale_range=1.0, seed=42):
+    """Generate random optimizer scales for multiple model variants.
+
+    Uses log-uniform sampling so that scale and 1/scale are equally likely.
+
+    Args:
+        num_variants: Number of variant scale sets to generate
+        scale_range: Max log2 scale magnitude (e.g., 1.0 means scales in [0.5, 2.0])
+        seed: Random seed for reproducibility
+
+    Returns:
+        List of dicts with lr_scale, momentum_scale, wd_scale
+    """
+    rng = np.random.RandomState(seed)
+    variants = []
+
+    for _ in range(num_variants):
+        def _sample():
+            log_scale = rng.uniform(0.2 * scale_range, scale_range)
+            sign = rng.choice([-1, 1])
+            return 2 ** (log_scale * sign)
+
+        variants.append({
+            "lr_scale": _sample(),
+            "momentum_scale": _sample(),
+            "wd_scale": _sample(),
+        })
+
+    return variants
