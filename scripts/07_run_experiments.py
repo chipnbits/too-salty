@@ -1,5 +1,11 @@
 """
-This file runs provides functions to run various experiments for the project, based off the finetuned models stored in SOUP_DIR with
+Run various experiments on finetuned models stored in SOUP_DIR:
+- Experiment 2: Permutation ablation
+- Experiment 3: Predicting soupability (similarity metrics)
+- Experiment 5: Deviation metrics from shared ancestor
+
+Usage:
+    python scripts/07_run_experiments.py
 """
 
 import itertools
@@ -13,9 +19,9 @@ import torch
 from torch import Tensor
 from torch.utils.data import DataLoader
 
-from evaluate import canonical_key, evaluate_model, extract_key_from_filename, fine_tuned_pattern
 from salty.datasets import get_cifar100_loaders
-from salty.models import get_resnet50_model
+from salty.evaluation import canonical_key, evaluate_model, extract_key_from_filename, fine_tuned_pattern
+from salty.models import get_model, get_model_from_config
 from salty.permute_model import permute_models
 from salty.similarity_metrics_from_logits import cka_similarity, logit_mse_kl
 from salty.similarity_metrics_from_models import cosine_similarity, l2_distance
@@ -53,10 +59,21 @@ class ModelManager:
         )
     """
 
-    def __init__(self, model_dir: str = SOUP_DIR, pattern: Pattern = fine_tuned_pattern, device: torch.device = DEVICE):
+    def __init__(
+        self,
+        model_dir: str = SOUP_DIR,
+        pattern: Pattern = fine_tuned_pattern,
+        device: torch.device = DEVICE,
+        model_name: str = "resnet50",
+        num_classes: int = 100,
+        dropout: float = 0.0,
+    ):
         self.soup_dir = model_dir
         self.pattern = pattern
         self.device = device
+        self.model_name = model_name
+        self.num_classes = num_classes
+        self.dropout = dropout
         self._model_paths: List[Path] = []
         self._model_keys: List[str] = []
         self._init_models()
@@ -74,14 +91,7 @@ class ModelManager:
         return len(self._model_paths)
 
     def __getitem__(self, index: int) -> torch.nn.Module:
-        """Load and return model at the given index.
-
-        Args:
-            index: Index of the model to load
-
-        Returns:
-            Loaded model with .key, .epoch, and .model_id attributes set
-        """
+        """Load and return model at the given index."""
         if index < 0 or index >= len(self._model_paths):
             raise IndexError(f"Model index {index} out of range [0, {len(self._model_paths)})")
 
@@ -111,15 +121,8 @@ class ModelManager:
         return model
 
     def _load_model(self, path: Path) -> torch.nn.Module:
-        """Load a single model from path.
-
-        Args:
-            path: Path to model checkpoint
-
-        Returns:
-            Loaded model
-        """
-        model = get_resnet50_model(num_classes=100)
+        """Load a single model from path."""
+        model = get_model(self.model_name, num_classes=self.num_classes, dropout=self.dropout)
         load_checkpoint(path, model)
         model.eval()
         model.to(self.device)
@@ -127,14 +130,7 @@ class ModelManager:
 
     @staticmethod
     def _parse_key(key: str) -> Tuple[int | None, int | None]:
-        """Parse epoch and model_id from key.
-
-        Args:
-            key: Canonical key string (e.g., "50_4")
-
-        Returns:
-            Tuple of (epoch, model_id), or (None, None) if parsing fails
-        """
+        """Parse epoch and model_id from key."""
         if not key:
             return None, None
         parts = key.split("_")
@@ -156,53 +152,25 @@ class ModelManager:
         return self._model_keys
 
     def get_key(self, index: int) -> str:
-        """Get the canonical key for a model at the given index.
-
-        Args:
-            index: Index of the model
-
-        Returns:
-            Canonical key string (e.g., "50_4")
-        """
+        """Get the canonical key for a model at the given index."""
         if index < 0 or index >= len(self._model_keys):
             raise IndexError(f"Model index {index} out of range [0, {len(self._model_keys)})")
         return self._model_keys[index]
 
     def get_epoch(self, index: int) -> int | None:
-        """Get the epoch for a model at the given index.
-
-        Args:
-            index: Index of the model
-
-        Returns:
-            Epoch number, or None if not available
-        """
+        """Get the epoch for a model at the given index."""
         key = self.get_key(index)
         epoch, _ = self._parse_key(key)
         return epoch
 
     def get_model_id(self, index: int) -> int | None:
-        """Get the model_id for a model at the given index.
-
-        Args:
-            index: Index of the model
-
-        Returns:
-            Model ID, or None if not available
-        """
+        """Get the model_id for a model at the given index."""
         key = self.get_key(index)
         _, model_id = self._parse_key(key)
         return model_id
 
     def get_index(self, key: str) -> int:
-        """Get the index of a model with the given canonical key.
-
-        Args:
-            key: Canonical key string (e.g., "50_4")
-
-        Returns:
-            Index of the model, or -1 if not found
-        """
+        """Get the index of a model with the given canonical key."""
         try:
             return self._model_keys.index(key)
         except ValueError:
@@ -214,35 +182,18 @@ class ModelManager:
         epochs: List[int] = list(range(10, 301, 10)),
         unique: bool = True,
     ) -> List[Tuple[int, int]]:
-        """Get all valid index pairs for models matching the specified epochs and model_ids.
-
-        This generates all possible pairings (including self-pairings) of models that
-        match the given epoch and model_id filters.
-
-        Args:
-            model_ids: List of model IDs to include (default: [1, 2, 3, 4])
-            epochs: List of epochs to include (default: range(10, 301, 10))
-            unique: If True, returns only unique pairings (A, B) where canonical_key(A, B)
-                    is generated only once, using combinations_with_replacement.
-                    If False, returns all permutations (A, B and B, A).
-
-        Returns:
-            List of (index_a, index_b) tuples for all valid model pairs
-        """
-        # Build a map from key to index for available models
+        """Get all valid index pairs for models matching the specified epochs and model_ids."""
         available_key_to_index: Dict[str, int] = {}
         for index, key in enumerate(self._model_keys):
             if key:
                 available_key_to_index[key] = index
 
-        # Generate all theoretical keys from epochs and model_ids
         all_possible_keys = [f"{e}_{m}" for e, m in itertools.product(epochs, model_ids)]
         available_keys = sorted([k for k in all_possible_keys if k in available_key_to_index])
 
         if unique:
             key_pairs_iterator = itertools.combinations_with_replacement(available_keys, 2)
         else:
-            # Use product to get all permutations (A, B and B, A)
             key_pairs_iterator = itertools.product(available_keys, available_keys)
 
         index_pairs: List[Tuple[int, int]] = []
@@ -254,12 +205,9 @@ class ModelManager:
         return index_pairs
 
 
-# Experiment 1 - # Shared Epochs Already done! (messy versuion in evaluate.py file)
-
-
 # Experiment 2 - Permutation Ablation
 def run_permutation_ablation_experiment(
-    mm: ModelManager,  # Use Any or the actual type ModelManager
+    mm: ModelManager,
     model_pairs: List[Tuple[int, int]],
     output_csv: str = "permutation_ablation_results.csv",
 ) -> None:
@@ -286,7 +234,7 @@ def run_permutation_ablation_experiment(
         except Exception as e:
             print(f"Error reading existing CSV: {e}. Starting fresh.")
 
-    # Filter out model pairs that have already been computed (checked by canonical key)
+    # Filter out model pairs that have already been computed
     pairs_to_process = [
         pair
         for pair in model_pairs
@@ -294,7 +242,7 @@ def run_permutation_ablation_experiment(
     ]
     print(f"Total pairs to process: {len(pairs_to_process)}")
 
-    dataloader_cifar100_test = get_cifar100_loaders(batch_size=128, num_workers=4)[2]  # Test loader
+    dataloader_cifar100_test = get_cifar100_loaders(batch_size=128, num_workers=4)[2]
 
     for idx_a, idx_b in pairs_to_process:
         model_a = mm[idx_a]
@@ -310,7 +258,7 @@ def run_permutation_ablation_experiment(
         acc, loss = evaluate_model(
             model=model_soup,
             dataloader=dataloader_cifar100_test,
-            device=mm.device,  # Use mm.device for consistency
+            device=mm.device,
         )
 
         if key_a > key_b:
@@ -330,10 +278,9 @@ def run_permutation_ablation_experiment(
         if mm.device.type == "cuda":
             torch.cuda.empty_cache()
 
-        print(f"  ✅ Saved (Acc: {acc:.2f}, Loss: {loss:.4f})")
+        print(f"  Saved (Acc: {acc:.2f}, Loss: {loss:.4f})")
 
     print("\nExperiment run completed.")
-    # Save final CSV and parquet file
     df_final = pd.read_csv(csv_file)
     df_final.to_parquet(csv_file.with_suffix(".parquet"), engine="fastparquet")
     print(f"Final results saved to {csv_file} and {csv_file.with_suffix('.parquet')}")
@@ -402,7 +349,7 @@ def record_similarity_metrics(
             kl_logits = mse_kl["kl"]
             cka_features = cka_similarity(features_model_a, features_model_b)
 
-            # Cannonical order for keys
+            # Canonical order for keys
             key_a, key_b = model_a.key, model_b.key
             if key_a > key_b:
                 key_a, key_b = key_b, key_a
@@ -426,9 +373,6 @@ def record_similarity_metrics(
     df.to_parquet(parquet_output, index=False)
 
 
-# Experiment 4 - Transitivity Prediction - Also already done !
-
-
 # Experiment 5 - Comparison of angle metric from the last shared checkpoint
 def record_deviation_metrics(
     mm: ModelManager,
@@ -445,7 +389,7 @@ def record_deviation_metrics(
                 MODEL_DIR, f"cifar100-resnet50/baseline-resnet50/baseline-resnet50-epoch_{model_ancestor_epoch}.pt"
             )
 
-            model_ancestor = get_resnet50_model(num_classes=100)
+            model_ancestor = get_model(mm.model_name, num_classes=mm.num_classes, dropout=mm.dropout)
             load_checkpoint(path, model_ancestor)
             model_ancestor.eval()
             model_ancestor.to(mm.device)
@@ -458,7 +402,7 @@ def record_deviation_metrics(
             l2 = l2_distance(model_a, model_b)["l2"] / 2.0
             cosine = cosine_similarity(model_a, model_b)
 
-            # Cannonical order for keys
+            # Canonical order for keys
             key_a, key_b = model_a.key, model_b.key
             if key_a > key_b:
                 key_a, key_b = key_b, key_a

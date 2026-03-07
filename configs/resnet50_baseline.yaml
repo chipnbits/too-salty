@@ -2,19 +2,22 @@
 project_name: "cifar100-resnet50"  # Wandb project name
 run_name: "baseline-resnet50"  # Wandb run name
 
+seed: 42  # Global random seed for reproducibility
+
 data:
+  dataset: "cifar100"  # Dataset name: cifar100 (add more later)
   num_classes: 100
   augment: true  # Enable data augmentation
   validation_split: 0.05 # 5% training sample held out for validation
   split_seed: 42 # random seed for data splitting
 
 model:
-  name: "resnet50"  # Option to add vit later
+  name: "resnet50"  # resnet18, resnet34, resnet50, resnet101, resnet152
   pretrained: false
   checkpoint_path: null  # or "models/pretrained-resnet50.pt"
 
 training:
-  epochs: 280
+  epochs: 300
   batch_size: 128
   num_workers: 4
   mixed_precision: false
@@ -30,7 +33,7 @@ scheduler: # MultiStepLR, StepLR, CosineAnnealingLR, None
   name: "CosineAnnealingLR"
   milestones: [100, 150]  # For MultiStepLR
   step_size: 30          # For StepLR
-  T_max: 280            # For CosineAnnealingLR
+  T_max: 300            # For CosineAnnealingLR
   eta_min: 0            # For CosineAnnealingLR
   gamma: 0.2
 
@@ -38,5 +41,3 @@ logging:
   log_interval: 50      # log to wandb every N training steps
   val_interval: 1       # run validation every N epochs
   checkpoint_interval: 50 # spacing to save model checkpoints (in epochs)
-
-

@@ -3,13 +3,17 @@
 This script loads a trained checkpoint and continues training multiple models with
 randomized optimizer hyperparameters (learning rate, momentum, weight decay).
 Each model diverges from the common starting point with different training dynamics.
+
+This step is parallelizable: each checkpoint can be processed independently.
+
+Usage:
+    python scripts/03_finetune_branches.py --checkpoint models/.../epoch_50.pt --num-models 4
+    python scripts/03_finetune_branches.py --checkpoint-dir models/.../checkpoints/
 """
 
 import argparse
 import os
-import random
 from copy import deepcopy
-from pathlib import Path
 
 import numpy as np
 import torch
@@ -17,15 +21,15 @@ import torch.nn as nn
 from dotenv import load_dotenv
 
 import wandb
-from salty.datasets import get_cifar100_loaders
-from salty.models import get_resnet50_model
-from salty.utils import load_checkpoint, load_checkpoint_config, load_config, save_checkpoint
-from train import (
+from salty.datasets import get_data_loaders
+from salty.models import get_model_from_config
+from salty.training import (
     build_optimizer,
     build_scheduler,
     get_device,
     train_loop,
 )
+from salty.utils import load_checkpoint, load_checkpoint_config, load_config, set_seed
 
 load_dotenv()
 
@@ -122,12 +126,12 @@ def finetune_from_checkpoint(
     Args:
         checkpoint_path: Path to checkpoint file to load
         num_models: Number of models to train from the checkpoint
-        additional_epochs: Number of additional epochs to train each model
         lr_scale_range: Max random log scale range for learning rate (default: 1.0 = 100%)
         momentum_scale_range: Max random log scale range for momentum (default: 1.0 = 100%)
         wd_scale_range: Max random log scale range for weight decay (default: 1.0 = 100%)
         device: Device to train on (cuda/cpu/mps), auto-detected if None
         base_seed: Base random seed for reproducibility
+        model_save_idx: Starting index offset for saved model names
     """
 
     # Strip name from the .pt checkpoint file for saving
@@ -139,14 +143,7 @@ def finetune_from_checkpoint(
     device = get_device(device)
 
     # Data loaders (same as original training)
-    train_loader, val_loader, test_loader = get_cifar100_loaders(
-        batch_size=base_config["training"]["batch_size"],
-        num_workers=base_config["training"]["num_workers"],
-        data_dir=DATA_DIR,
-        val_ratio=base_config["data"].get("validation_split", 0.0),
-        seed=base_config["data"]["split_seed"],
-        augment=base_config["data"].get("augment", True),
-    )
+    train_loader, val_loader, test_loader = get_data_loaders(base_config, DATA_DIR)
 
     # Train each model variant
     for model_idx in range(num_models):
@@ -155,16 +152,10 @@ def finetune_from_checkpoint(
         print(f"{'='*80}\n")
 
         model_seed = base_seed + model_idx
-        torch.manual_seed(model_seed)
-        np.random.seed(model_seed)
-        random.seed(model_seed)
+        set_seed(model_seed)
 
-        # Build model
-        model_cfg = base_config["model"]
-        if model_cfg["name"] == "resnet50":
-            model = get_resnet50_model(num_classes=base_config["data"]["num_classes"])
-        else:
-            raise NotImplementedError(f"Model {model_cfg['name']} not implemented.")
+        # Build model from config
+        model = get_model_from_config(base_config)
         model = model.to(device)
 
         # Build optimizer & scheduler
@@ -198,7 +189,6 @@ def finetune_from_checkpoint(
         print()
 
         # Create modified config for this model
-        # Make a termination estimate based on original epochs + additional
         additional_epochs = base_config["training"].get("epochs", 300) - start_epoch + 10
         finetune_config = deepcopy(base_config)
         finetune_config["training"]["epochs"] = start_epoch + additional_epochs
@@ -225,6 +215,8 @@ def finetune_from_checkpoint(
         # Loss function
         train_loss_fn = nn.CrossEntropyLoss(label_smoothing=0.1)
 
+        save_dir = os.path.join(MODEL_DIR, finetune_config.get("project_name"), finetune_config.get("run_name"))
+
         # Train this model
         train_loop(
             model,
@@ -235,6 +227,7 @@ def finetune_from_checkpoint(
             scheduler,
             device,
             finetune_config,
+            save_dir=save_dir,
             start_epoch=start_epoch,
             best_val_acc=best_val_acc,
             global_step=global_step,
@@ -284,49 +277,59 @@ if __name__ == "__main__":
     )
     parser.add_argument("--seed", type=int, default=42, help="Base random seed for reproducibility (default: 42)")
 
+    parser.add_argument(
+        "--checkpoint-dir",
+        type=str,
+        default=None,
+        help="Directory of checkpoints to finetune from (overrides --checkpoint, processes all .pt files)",
+    )
+    parser.add_argument(
+        "--model-save-idx",
+        type=int,
+        default=0,
+        help="Starting index offset for saved model names (default: 0)",
+    )
     args = parser.parse_args()
 
-    # Validate checkpoint exists
+    if args.checkpoint_dir is not None:
+        # Process all checkpoints in the directory
+        checkpoint_files = [f for f in os.listdir(args.checkpoint_dir) if f.endswith(".pt")]
 
-    # finetune_from_checkpoint(
-    #     checkpoint_path=args.checkpoint,
-    #     num_models=args.num_models,
-    #     additional_epochs=args.epochs,
-    #     lr_scale_range=args.lr_scale,
-    #     momentum_scale_range=args.momentum_scale,
-    #     wd_scale_range=args.wd_scale,
-    #     device=args.device,
-    #     base_seed=args.seed,
-    # )
+        def extract_epoch_num(filename):
+            try:
+                parts = filename.split("_")
+                epoch_str = parts[-1].split(".")[0]
+                return int(epoch_str)
+            except (IndexError, ValueError):
+                return -1
 
-    # Parse all checkpoints
-    baseline_dir = "/data/sghyselincks/too-salty/models/cifar100-resnet50/baseline-resnet50"
-    checkpoint_files = [f for f in os.listdir(baseline_dir) if f.endswith(".pt")]
+        checkpoint_files.sort(key=extract_epoch_num, reverse=True)
 
-    # Order them by epoch number if possible _110.pt
-    def extract_epoch_num(filename):
-        try:
-            parts = filename.split("_")
-            epoch_part = parts[-1]  # e.g., "110.pt"
-            epoch_str = epoch_part.split(".")[0]  # e.g., "110"
-            return int(epoch_str)
-        except (IndexError, ValueError):
-            return -1  # Default if parsing fails
+        for checkpoint_file in checkpoint_files:
+            checkpoint_path = os.path.join(args.checkpoint_dir, checkpoint_file)
+            finetune_from_checkpoint(
+                checkpoint_path=checkpoint_path,
+                num_models=args.num_models,
+                lr_scale_range=args.lr_scale,
+                momentum_scale_range=args.momentum_scale,
+                wd_scale_range=args.wd_scale,
+                device=args.device,
+                base_seed=args.seed,
+                model_save_idx=args.model_save_idx,
+            )
 
-    # Largest epoch first
-    checkpoint_files.sort(key=extract_epoch_num, reverse=True)
+        print(f"Processed {len(checkpoint_files)} checkpoint files from {args.checkpoint_dir}")
 
-    for checkpoint_file in checkpoint_files:
-        checkpoint_path = os.path.join(baseline_dir, checkpoint_file)
+    elif args.checkpoint is not None:
         finetune_from_checkpoint(
-            checkpoint_path=checkpoint_path,
+            checkpoint_path=args.checkpoint,
             num_models=args.num_models,
-            lr_scale_range=1.0,
-            momentum_scale_range=0.4,
-            wd_scale_range=0.4,
+            lr_scale_range=args.lr_scale,
+            momentum_scale_range=args.momentum_scale,
+            wd_scale_range=args.wd_scale,
             device=args.device,
             base_seed=args.seed,
-            model_save_idx=2,
+            model_save_idx=args.model_save_idx,
         )
-
-    print(f"Found {len(checkpoint_files)} checkpoint files in {baseline_dir}")
+    else:
+        parser.error("Either --checkpoint or --checkpoint-dir must be provided.")
