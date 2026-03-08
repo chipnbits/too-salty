@@ -175,20 +175,28 @@ if __name__ == "__main__":
         "--variants-config", type=str, default="configs/resnet50_finetune.yaml",
         help="YAML file defining variant scales (default: configs/resnet50_finetune.yaml)",
     )
-    parser.add_argument("--model-idx", type=int, default=None, help="Run only this variant index (for HPC single-job)")
+    parser.add_argument("--model-idx", type=int, default=None, help="Run only this variant index")
     parser.add_argument("--device", type=str, default=None, help="Device (cuda/cpu/mps), auto-detected if omitted")
     parser.add_argument("--seed", type=int, default=42, help="Base random seed (default: 42)")
 
     # Alternative: generate random scales instead of using config
     parser.add_argument("--random-scales", action="store_true", help="Generate random scales instead of using config")
     parser.add_argument("--num-models", type=int, default=4, help="Number of random variants to generate (default: 4)")
-    parser.add_argument("--scale-range", type=float, default=1.0, help="Log2 scale range for random generation (default: 1.0)")
+    parser.add_argument("--lr-scale-range", type=float, default=1.0, help="Log2 scale range for LR (default: 1.0)")
+    parser.add_argument("--momentum-scale-range", type=float, default=0.4, help="Log2 scale range for momentum (default: 0.4)")
+    parser.add_argument("--wd-scale-range", type=float, default=0.4, help="Log2 scale range for weight decay (default: 0.4)")
 
     args = parser.parse_args()
 
     # Load or generate variants
     if args.random_scales:
-        scale_list = generate_random_scales(args.num_models, scale_range=args.scale_range, seed=args.seed)
+        scale_list = generate_random_scales(
+            args.num_models,
+            lr_scale_range=args.lr_scale_range,
+            momentum_scale_range=args.momentum_scale_range,
+            wd_scale_range=args.wd_scale_range,
+            seed=args.seed,
+        )
         variants = {i + 1: s for i, s in enumerate(scale_list)}
         print(f"Generated {len(variants)} random scale variants:")
         for idx, v in variants.items():

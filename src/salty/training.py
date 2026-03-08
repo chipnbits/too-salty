@@ -1,6 +1,7 @@
 """Shared training utilities: loops, optimizer/scheduler builders, device selection."""
 
 import os
+import time
 
 import numpy as np
 import torch
@@ -36,6 +37,8 @@ def train_loop(
     os.makedirs(save_dir, exist_ok=True)
 
     for epoch in range(start_epoch, num_epochs):
+        epoch_start = time.time()
+
         # train for one epoch
         train_loss, train_acc, global_step = train_one_epoch(
             model,
@@ -65,6 +68,9 @@ def train_loop(
         if scheduler is not None:
             scheduler.step()
 
+        epoch_time = time.time() - epoch_start
+        print(f"Epoch {epoch} completed in {epoch_time:.1f}s")
+
         # Epoch-level logging to wandb
         if wandb.run is not None:
             wandb.log(
@@ -76,6 +82,7 @@ def train_loop(
                     "epoch": epoch,
                     "lr": optimizer.param_groups[0]["lr"],
                     "global_step": global_step,
+                    "timing/epoch_seconds": epoch_time,
                 },
                 step=global_step,
             )
@@ -335,32 +342,40 @@ def scale_optimizer(optimizer, lr_scale=1.0, momentum_scale=1.0, wd_scale=1.0):
     return {"original": original, "scaled": scaled}
 
 
-def generate_random_scales(num_variants, scale_range=1.0, seed=42):
+def generate_random_scales(num_variants, lr_scale_range=1.0, momentum_scale_range=0.4,
+                           wd_scale_range=0.4, seed=42):
     """Generate random optimizer scales for multiple model variants.
 
-    Uses log-uniform sampling so that scale and 1/scale are equally likely.
+    Each variant gets an independent seed (base seed + variant index) so that
+    scales are reproducible per-variant regardless of how many variants are
+    generated. Uses log-uniform sampling: log2(scale) is drawn uniformly from
+    [0.2*range, range] with a random sign, so scale and 1/scale are equally
+    likely.
 
     Args:
         num_variants: Number of variant scale sets to generate
-        scale_range: Max log2 scale magnitude (e.g., 1.0 means scales in [0.5, 2.0])
-        seed: Random seed for reproducibility
+        lr_scale_range: Max log2 scale magnitude for learning rate (default: 1.0)
+        momentum_scale_range: Max log2 scale magnitude for momentum (default: 0.4)
+        wd_scale_range: Max log2 scale magnitude for weight decay (default: 0.4)
+        seed: Base random seed; variant i uses seed + i
 
     Returns:
         List of dicts with lr_scale, momentum_scale, wd_scale
     """
-    rng = np.random.RandomState(seed)
     variants = []
 
-    for _ in range(num_variants):
-        def _sample():
+    for i in range(num_variants):
+        rng = np.random.RandomState(seed + i)
+
+        def _sample(scale_range):
             log_scale = rng.uniform(0.2 * scale_range, scale_range)
             sign = rng.choice([-1, 1])
             return 2 ** (log_scale * sign)
 
         variants.append({
-            "lr_scale": _sample(),
-            "momentum_scale": _sample(),
-            "wd_scale": _sample(),
+            "lr_scale": _sample(lr_scale_range),
+            "momentum_scale": _sample(momentum_scale_range),
+            "wd_scale": _sample(wd_scale_range),
         })
 
     return variants
