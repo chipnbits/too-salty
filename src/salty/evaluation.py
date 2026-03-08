@@ -9,8 +9,11 @@ from tqdm import tqdm
 
 from salty.models import get_model, get_model_from_config
 
-# Standard filename pattern for finetuned models: epoch_{N}_model_{M}.pt
+# Standard filename pattern for finetuned models: epoch_{N}_model_{M}.pt (legacy flat files)
 fine_tuned_pattern = re.compile(r"epoch_(\d+)_model_(\d+)\.pt")
+
+# Directory pattern for finetuned models: *-epoch_{N}_model_{M} (new layout)
+fine_tuned_dir_pattern = re.compile(r".*-epoch_(\d+)_model_(\d+)$")
 
 
 def canonical_key(key_a, key_b):

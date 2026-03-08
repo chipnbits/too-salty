@@ -8,11 +8,10 @@ Usage:
     python scripts/07_run_experiments.py
 """
 
-import itertools
 import os
 import pickle
 from pathlib import Path
-from typing import Dict, List, Pattern, Tuple
+from typing import Dict, List, Tuple
 
 import pandas as pd
 import torch
@@ -20,8 +19,9 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 
 from salty.datasets import get_cifar100_loaders
-from salty.evaluation import canonical_key, evaluate_model, extract_key_from_filename, fine_tuned_pattern
-from salty.models import get_model, get_model_from_config
+from salty.evaluation import canonical_key, evaluate_model
+from salty.model_manager import ModelManager
+from salty.models import get_model
 from salty.permute_model import permute_models
 from salty.similarity_metrics_from_logits import cka_similarity, logit_mse_kl
 from salty.similarity_metrics_from_models import cosine_similarity, l2_distance
@@ -30,179 +30,6 @@ from salty.utils import load_checkpoint, soup_models
 MODEL_DIR = os.getenv("MODEL_DIR", "./models")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 SOUP_DIR = os.getenv("SOUP_DIR", "./models/soup_models")
-
-
-class ModelManager:
-    """Class to manage loading and storing models for experiments.
-
-    This class functions as an iterable and indexable collection of models.
-    Models are loaded lazily from disk when accessed by index.
-
-    Example:
-        manager = ModelManager()
-
-        # Indexable - loads model on access
-        model = manager[2]
-
-        # Iterable - loads models as you iterate
-        for model in manager:
-            print(model.key, model.epoch, model.model_id)
-
-        # Get key/index mappings
-        key = manager.get_key(2)  # e.g., "50_4"
-        index = manager.get_index("50_4")  # e.g., 2
-
-        # Get index pairs for specific epochs and model_ids
-        pairs = manager.get_index_pairs(
-            model_ids=[1, 2, 3, 4],
-            epochs=[10, 20, 30]
-        )
-    """
-
-    def __init__(
-        self,
-        model_dir: str = SOUP_DIR,
-        pattern: Pattern = fine_tuned_pattern,
-        device: torch.device = DEVICE,
-        model_name: str = "resnet50",
-        num_classes: int = 100,
-        dropout: float = 0.0,
-    ):
-        self.soup_dir = model_dir
-        self.pattern = pattern
-        self.device = device
-        self.model_name = model_name
-        self.num_classes = num_classes
-        self.dropout = dropout
-        self._model_paths: List[Path] = []
-        self._model_keys: List[str] = []
-        self._init_models()
-
-    def _init_models(self) -> None:
-        """Initialize model paths and keys from the soup directory."""
-        model_filenames = [f for f in os.listdir(self.soup_dir) if self.pattern.match(f)]
-        model_filenames = sorted(model_filenames)
-
-        self._model_paths = [Path(self.soup_dir) / f for f in model_filenames]
-        self._model_keys = [extract_key_from_filename(f, self.pattern) for f in model_filenames]
-
-    def __len__(self) -> int:
-        """Return the number of models."""
-        return len(self._model_paths)
-
-    def __getitem__(self, index: int) -> torch.nn.Module:
-        """Load and return model at the given index."""
-        if index < 0 or index >= len(self._model_paths):
-            raise IndexError(f"Model index {index} out of range [0, {len(self._model_paths)})")
-
-        path = self._model_paths[index]
-        key = self._model_keys[index]
-        model = self._load_model(path)
-        model.key = key
-
-        # Parse and attach epoch and model_id from key
-        epoch, model_id = self._parse_key(key)
-        model.epoch = epoch
-        model.model_id = model_id
-
-        return model
-
-    def __iter__(self):
-        """Return an iterator over all models."""
-        self._iter_index = 0
-        return self
-
-    def __next__(self) -> torch.nn.Module:
-        """Return the next model in iteration."""
-        if self._iter_index >= len(self._model_paths):
-            raise StopIteration
-        model = self[self._iter_index]
-        self._iter_index += 1
-        return model
-
-    def _load_model(self, path: Path) -> torch.nn.Module:
-        """Load a single model from path."""
-        model = get_model(self.model_name, num_classes=self.num_classes, dropout=self.dropout)
-        load_checkpoint(path, model)
-        model.eval()
-        model.to(self.device)
-        return model
-
-    @staticmethod
-    def _parse_key(key: str) -> Tuple[int | None, int | None]:
-        """Parse epoch and model_id from key."""
-        if not key:
-            return None, None
-        parts = key.split("_")
-        if len(parts) == 2:
-            try:
-                return int(parts[0]), int(parts[1])
-            except ValueError:
-                return None, None
-        return None, None
-
-    @property
-    def model_paths(self) -> List[Path]:
-        """Get list of model paths."""
-        return self._model_paths
-
-    @property
-    def model_keys(self) -> List[str]:
-        """Get list of model keys."""
-        return self._model_keys
-
-    def get_key(self, index: int) -> str:
-        """Get the canonical key for a model at the given index."""
-        if index < 0 or index >= len(self._model_keys):
-            raise IndexError(f"Model index {index} out of range [0, {len(self._model_keys)})")
-        return self._model_keys[index]
-
-    def get_epoch(self, index: int) -> int | None:
-        """Get the epoch for a model at the given index."""
-        key = self.get_key(index)
-        epoch, _ = self._parse_key(key)
-        return epoch
-
-    def get_model_id(self, index: int) -> int | None:
-        """Get the model_id for a model at the given index."""
-        key = self.get_key(index)
-        _, model_id = self._parse_key(key)
-        return model_id
-
-    def get_index(self, key: str) -> int:
-        """Get the index of a model with the given canonical key."""
-        try:
-            return self._model_keys.index(key)
-        except ValueError:
-            return -1
-
-    def get_index_pairs(
-        self,
-        model_ids: List[int] = [1, 2, 3, 4],
-        epochs: List[int] = list(range(10, 301, 10)),
-        unique: bool = True,
-    ) -> List[Tuple[int, int]]:
-        """Get all valid index pairs for models matching the specified epochs and model_ids."""
-        available_key_to_index: Dict[str, int] = {}
-        for index, key in enumerate(self._model_keys):
-            if key:
-                available_key_to_index[key] = index
-
-        all_possible_keys = [f"{e}_{m}" for e, m in itertools.product(epochs, model_ids)]
-        available_keys = sorted([k for k in all_possible_keys if k in available_key_to_index])
-
-        if unique:
-            key_pairs_iterator = itertools.combinations_with_replacement(available_keys, 2)
-        else:
-            key_pairs_iterator = itertools.product(available_keys, available_keys)
-
-        index_pairs: List[Tuple[int, int]] = []
-        for key_a, key_b in key_pairs_iterator:
-            idx_a = available_key_to_index[key_a]
-            idx_b = available_key_to_index[key_b]
-            index_pairs.append((idx_a, idx_b))
-
-        return index_pairs
 
 
 # Experiment 2 - Permutation Ablation
@@ -423,7 +250,7 @@ def record_deviation_metrics(
 
 
 if __name__ == "__main__":
-    mm = ModelManager(model_dir=SOUP_DIR, pattern=fine_tuned_pattern, device=DEVICE)
+    mm = ModelManager(models_dir=SOUP_DIR, device=DEVICE)
     # Example usage of get_index_pairs
     index_pairs = mm.get_index_pairs(
         model_ids=[1, 2, 3, 4],
