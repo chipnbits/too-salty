@@ -95,8 +95,37 @@ from salty.models import ResNet
 ```
 
 ### Running the Project
-```bash
-uv run python main.py
+The project components are meant to be run as scripts from the root directory.
+For VSCode integration, select the Python interpreter from the `.venv` folder.
 
-# For VSCode integration, select the Python interpreter from the `.venv` folder.
+```bash
+# 00 - Check CUDA availability
+uv run python scripts/00_check_cuda.py
+
+# 01 - Download CIFAR-100 and CIFAR-100-C datasets
+uv run python scripts/01_build_dataset.py
+
+# 02 - Train baseline ResNet-50 on CIFAR-100 (300 epochs, checkpoints every 10 epochs)
+uv run python scripts/02_train_baseline.py --config configs/resnet50_baseline.yaml
+
+# 03 - Finetune 4 variant branches from each baseline checkpoint (epochs 50-300)
+#      From all checkpoints in the baseline directory:
+uv run python scripts/03_finetune_branches.py \
+    --checkpoint-dir models/cifar100-resnet50/baseline-resnet50/ \
+    --variants-config configs/resnet50_finetune.yaml \
+    --seed 42
+
+# 04 - Train EMA and SWA experiments (12 runs with different seeds)
+uv run python scripts/04_train_ema_swa.py \
+    --config configs/resnet50_baseline.yaml \
+    --runs 12 \
+    --swa-start 220 \
+    --swa-lr 0.03 \
+    --ema-decay 0.999
+
+# 05 - Evaluate model soups (pairwise weight averaging)
+uv run python scripts/05_evaluate_soups.py
+
+# 06 - Evaluate EMA/SWA models
+uv run python scripts/06_evaluate_ema_swa.py
 ```

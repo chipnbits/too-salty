@@ -259,11 +259,11 @@ if __name__ == "__main__":
     )
     print(f"Total unique model pairs: {len(index_pairs)}")
 
-    experiments_to_run = [5]  # Specify which experiments to run
+    experiments_to_run = [2,3,5]  # Specify which experiments to run
 
     # Experiment 2 - Permutation Ablation
     if 2 in experiments_to_run:
-        run_permutation_ablation_experiment(mm, index_pairs, output_csv="permutation_ablation_results.csv")
+        run_permutation_ablation_experiment(mm, index_pairs, output_csv="analysis/permutation_ablation_results.csv")
 
     # Experiment 3 - Predicting Soupability
     if 3 in experiments_to_run:
@@ -279,11 +279,11 @@ if __name__ == "__main__":
             mm,
             logits,
             penultimate_activations,
-            csv_output="similarity_metrics.csv",
+            csv_output="analysis/similarity_metrics.csv",
         )
 
     if 5 in experiments_to_run:
         record_deviation_metrics(
             mm,
-            csv_output="angle_change_metrics.csv",
+            csv_output="analysis/angle_change_metrics.csv",
         )

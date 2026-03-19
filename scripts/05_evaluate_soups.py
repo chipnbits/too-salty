@@ -10,6 +10,7 @@ Usage:
 """
 
 import argparse
+import itertools
 import os
 import random
 from typing import List, Tuple
@@ -53,11 +54,15 @@ def evaluate_all_soups(
     severities: List[int] = [3],
     seed: int = 42,
     acc_threshold: float = 5.0,
+    num_workers: int = 1,
+    worker_id: int = 0,
 ) -> pd.DataFrame:
     """Evaluate all pairwise model soups managed by *mm*.
 
     Results are written incrementally to *result_path* so the run can resume
-    after interruption.
+    after interruption.  When *num_workers* > 1, pairs are deterministically
+    split across workers so multiple GPUs can evaluate in parallel, each
+    writing to its own shard CSV.
     """
     _, _, test_loader = get_cifar100_loaders(batch_size=batch_size)
 
@@ -65,14 +70,18 @@ def evaluate_all_soups(
     if computed_keys:
         print(f"Resuming. Found {len(computed_keys)} previously computed pairs.")
 
-    # All key pairs (including self-pairings)
-    all_keys = mm.keys
-    all_pairs = [(ka, kb) for ka in all_keys for kb in all_keys]
+    # Canonical pairs only: (ka, kb) with ka <= kb (includes self-pairings)
+    all_keys = sorted(mm.keys)
+    all_pairs = list(itertools.combinations_with_replacement(all_keys, 2))
 
     random.seed(seed)
     random.shuffle(all_pairs)
 
-    print(f"Discovered {len(mm)} models, {len(all_pairs)} total pairs")
+    # Split pairs across workers
+    if num_workers > 1:
+        all_pairs = [p for i, p in enumerate(all_pairs) if i % num_workers == worker_id]
+
+    print(f"Discovered {len(mm)} models, {len(all_pairs)} pairs for worker {worker_id}/{num_workers}")
 
     for key_a, key_b in all_pairs:
         canon = canonical_key(key_a, key_b)
@@ -134,6 +143,10 @@ if __name__ == "__main__":
     parser.add_argument("--severities", type=int, nargs="+", default=[3])
     parser.add_argument("--acc-threshold", type=float, default=5.0,
                         help="Skip corruption eval if clean acc below this (default: 5.0)")
+    parser.add_argument("--num-workers", type=int, default=1,
+                        help="Total number of parallel workers (SLURM array size)")
+    parser.add_argument("--worker-id", type=int, default=0,
+                        help="This worker's ID (0-indexed, use SLURM_ARRAY_TASK_ID)")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
@@ -141,7 +154,10 @@ if __name__ == "__main__":
     mm = ModelManager(args.variants_dir, device="cuda")
 
     result_name = f"rand_soups_seed_{args.seed}"
-    result_path = os.path.join(args.output_dir, f"{result_name}.csv")
+    if args.num_workers > 1:
+        result_path = os.path.join(args.output_dir, f"{result_name}_worker_{args.worker_id}.csv")
+    else:
+        result_path = os.path.join(args.output_dir, f"{result_name}.csv")
 
     df = evaluate_all_soups(
         mm,
@@ -150,9 +166,15 @@ if __name__ == "__main__":
         severities=args.severities,
         seed=args.seed,
         acc_threshold=args.acc_threshold,
+        num_workers=args.num_workers,
+        worker_id=args.worker_id,
     )
 
-    parquet_path = os.path.join(args.output_dir, f"{result_name}.parquet")
-    df.to_parquet(parquet_path, index=False)
-    print(f"Saved: {result_path}, {parquet_path}")
-    print(f"Total pairs evaluated: {len(df)}")
+    print(f"Saved: {result_path}")
+    print(f"Total pairs evaluated by this worker: {len(df)}")
+
+    # If single worker, also save parquet
+    if args.num_workers <= 1:
+        parquet_path = os.path.join(args.output_dir, f"{result_name}.parquet")
+        df.to_parquet(parquet_path, index=False)
+        print(f"Saved parquet: {parquet_path}")
