@@ -52,7 +52,7 @@ Modify `.env` as needed if you want to change any default settings.
 
 #### 5. Download the datasets (CIFAR-100 and CIFAR-100-C):
 ```bash
-uv run python build_dataset.py
+uv run python scripts/01_build_dataset.py
 ```
 This will download:
 - CIFAR-100 train and test sets (~170 MB)
@@ -62,8 +62,8 @@ The datasets will be saved to the directory specified in `DATA_DIR` (default: `.
 
 Optional flags:
 ```bash
-uv run python build_dataset.py --skip-cifar100c  # Skip CIFAR-100-C download
-uv run python build_dataset.py --skip-cifar100   # Skip CIFAR-100 download
+uv run python scripts/01_build_dataset.py --skip-cifar100c  # Skip CIFAR-100-C download
+uv run python scripts/01_build_dataset.py --skip-cifar100   # Skip CIFAR-100 download
 ```
 
 #### 6. Setup precommit hooks for code quality:
@@ -165,13 +165,13 @@ uv run python scripts/07_run_experiments.py
 
 #### Phase 5: Notebooks (local)
 
-Analysis notebooks in `notebooks/` produce the figures and tables for the report. They are numbered and should be run in order:
+Analysis notebooks in `notebooks/` produce the figures and tables for the report. They depend on `notebooks/preprocessing.py` which loads and merges the evaluation data from `analysis/combined_analysis.parquet`. Run notebooks in order:
 
 1. **Shared Epochs** — Effect of shared training history on soup quality
 2. **Permutations** — Permutation ablation analysis
 3. **Similarities** — Similarity metrics as predictors of soupability
-4. **Transitivity** — Transitivity analysis of pairwise soup gains
+4. **Transitivity** — Transitivity analysis of pairwise soup gains, including ternary simplex visualizations for transitivity failure triplets
 5. **Corrupted** — Robustness under distribution shift (CIFAR-100-C)
 6. **EMA/SWA** — Comparison with exponential moving average and stochastic weight averaging
-7. **Ternary Simplex** — Triangle plots for three-model soup landscapes
+6.1. **Soup Values for Final Table** — Summary statistics for the report table
 8. **Alpha Sweep** — Effect of interpolation weight on soup accuracy
