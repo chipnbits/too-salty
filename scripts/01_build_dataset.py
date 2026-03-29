@@ -102,7 +102,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Determine data directory (priority: env var > default)
-    data_dir = os.getenv("DATA_DIR", "./data")
+    data_dir = os.getenv("DATA_DIR", "../data")
     # Convert to absolute path
     data_dir = Path(data_dir).resolve()
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -121,7 +121,7 @@ if __name__ == "__main__":
         # Download test set
         datasets.CIFAR100(root=str(data_dir), train=False, download=True)
 
-        print("✓ CIFAR-100 download complete!")
+        print("CIFAR-100 download complete!")
     else:
         print("\n[1/2] Skipping CIFAR-100 download")
 
@@ -132,7 +132,7 @@ if __name__ == "__main__":
 
         ensure_cifar100c_downloaded(str(data_dir))
 
-        print("✓ CIFAR-100-C download complete!")
+        print("CIFAR-100-C download complete!")
     else:
         print("\n[2/2] Skipping CIFAR-100-C download")
 

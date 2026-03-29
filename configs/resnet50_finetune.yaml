@@ -1,0 +1,31 @@
+# Finetune variants for ResNet-50 branching experiments.
+# Each variant applies multiplicative scales to the optimizer hyperparameters
+# from the baseline checkpoint.
+#
+# Usage:
+#   # Single model from single checkpoint:
+#   python scripts/03_finetune_branches.py --checkpoint models/.../epoch_50.pt --model-idx 1
+#
+#   # All models from single checkpoint:
+#   python scripts/03_finetune_branches.py --checkpoint models/.../epoch_50.pt
+#
+#   # All models from all checkpoints in a directory (HPC batch):
+#   python scripts/03_finetune_branches.py --checkpoint-dir models/.../baseline-resnet50/
+
+variants:
+  1:
+    lr_scale: 0.7073
+    momentum_scale: 1.1009
+    wd_scale: 0.8284
+  2:
+    lr_scale: 1.2244
+    momentum_scale: 0.9247
+    wd_scale: 1.1150
+  3:
+    lr_scale: 0.5112
+    momentum_scale: 1.0695
+    wd_scale: 1.1099
+  4:
+    lr_scale: 0.5373
+    momentum_scale: 0.8594
+    wd_scale: 0.9078

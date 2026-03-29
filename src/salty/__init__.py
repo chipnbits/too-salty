@@ -6,6 +6,6 @@ A package for model alignment and souping experiments.
 
 __version__ = "0.1.0"
 
-from . import datasets, models, resnet
+from . import datasets, evaluation, model_manager, models, resnet, training, wide_resnet
 
-__all__ = ["datasets", "models", "resnet"]
+__all__ = ["datasets", "evaluation", "model_manager", "models", "resnet", "training", "wide_resnet"]
