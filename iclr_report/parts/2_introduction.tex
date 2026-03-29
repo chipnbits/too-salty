@@ -39,6 +39,6 @@ More experiments on the effect of permuting models~\cite{gitrebasin} prior to so
 
 \textbf{Soups and Soup Gain:} We soup pairs of models using the simple arithmetic mean $\theta_{\text{soup}} = \frac{1}{2}\theta_A + \frac{1}{2}\theta_B$. As shown by~\citet{gitrebasin} and~\cite{transientperformancegains}, the loss barrier typically has the most extreme behaviour at the midpoint, making it a useful summary statistic of souping performance across weights interpolation, accurately identifying souping failure. Characteristic weighting plots are shown in \ref{fig:soup_weghts}. 
 
-\emph{Soup gain} as the test set accuracy gain of souping two models relative to the \emph{best} parent model. 
+\emph{Soup gain} is the test set accuracy gain of souping two models relative to the \emph{best} parent model. 
 $$\text{soup gain} = \text{acc}(\theta_{\text{soup}}) - \max\{\text{acc}(\theta_A), \text{acc}(\theta_B)\}$$
 where $\text{acc}(.)$ denotes test accuracy. We compare against the maximum accuracy of the ingredients, rather than the mean, as the purpose of a soup should be to improve over its ingredients. Soup gain can alternatively be measured over the loss. We use soup gain as the primary measure of the effectiveness of souping. We also refer to soups with positive and negative soup gain simply as positive and negative soups. 
