@@ -246,3 +246,25 @@ def soup_models(modelA, modelB, alpha=0.5):
 
     soup_model.load_state_dict(soup_state_dict)
     return soup_model
+
+
+def ternary_soup_state_dict(state_dicts, weights):
+    """
+    Compute a convex combination of N model state_dicts.
+
+    Args:
+        state_dicts: List of state_dicts (all must have identical keys)
+        weights: List of floats summing to 1.0
+
+    Returns:
+        A new state_dict with blended parameters.
+    """
+    assert len(state_dicts) == len(weights)
+    base = state_dicts[0]
+    blended = {}
+    for key in base.keys():
+        if torch.is_floating_point(base[key]):
+            blended[key] = sum(w * sd[key] for w, sd in zip(weights, state_dicts))
+        else:
+            blended[key] = base[key]
+    return blended
