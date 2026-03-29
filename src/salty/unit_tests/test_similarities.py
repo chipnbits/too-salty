@@ -10,7 +10,7 @@ from salty.similarity_metrics_from_models import (
     l2_distance,
     cosine_similarity,
     probe_set_similarities,
-    compare_resnet50_pair,
+    compare_model_pair,
 )
 
 
@@ -156,7 +156,7 @@ def test_probe_set_similarities_empty_probe_set():
     assert sims["cka_features"] == 0.0
 
 
-def test_compare_resnet50_pair_identical_models():
+def test_compare_model_pair_identical_models():
     torch.manual_seed(0)
     a = resnet50()
     b = resnet50()
@@ -164,7 +164,7 @@ def test_compare_resnet50_pair_identical_models():
 
     loader = _make_probe_loader()
 
-    stats = compare_resnet50_pair(
+    stats = compare_model_pair(
         a,
         b,
         probe_set=loader,
@@ -186,13 +186,13 @@ def test_compare_resnet50_pair_identical_models():
     assert stats["cka_features"] == pytest.approx(1.0, rel=1e-4, abs=1e-4)
 
 
-def test_compare_resnet50_pair_flags_control_outputs():
+def test_compare_model_pair_flags_control_outputs():
     torch.manual_seed(0)
     a = resnet50()
     b = resnet50()
     loader = _make_probe_loader()
 
-    stats = compare_resnet50_pair(
+    stats = compare_model_pair(
         a,
         b,
         probe_set=loader,

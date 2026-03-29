@@ -25,6 +25,7 @@ dependencies = [
     "torchvision>=0.24.1",
     "tqdm>=4.67.1",
     "wandb>=0.23.0",
+    "mpltern>=1.0.4",
 ]
 
 [tool.hatch.build.targets.wheel]

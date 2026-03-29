@@ -1,21 +1,49 @@
-e
 % Title - Using Title Case as required
-\title{When is Model Souping Effective? Similarity, Transitivity, and Robustness}
+\title{When is Model Souping Tasty? Similarity, Transitivity, and Robustness}
 
 % Authors - Anonymized for review
 % Note: The 'anonymous' option in documentclass will handle anonymization
 % When ready for final submission, update with real names and affiliations
 
-\author{Anonymous Authors}
+\author{Pierre Mackenzie}
+\orcid{} % optional
 \affiliation{
-  \institution{Anonymous Institution}
+  \institution{Department of Computer Science, University of British Columbia}
+  \city{Vancouver}
+  \country{Canada}
+}
+\email{pierrerl@cs.ubc.ca}
+
+\author{Simon Ghyselincks}
+\affiliation{
+  \institution{Department of Computer Science, University of British Columbia}
+  \city{Vancouver}
+  \country{Canada}
+}
+\affiliation{
+  \institution{Vector Institute}
+  \city{Toronto}
+  \country{Canada}
+}
+
+\author{Evan Shelhamer}
+\affiliation{
+  \institution{Department of Computer Science, University of British Columbia}
+  \city{Vancouver}
+  \country{Canada}
+}
+\affiliation{
+  \institution{Vector Institute}
+  \city{Toronto}
+  \country{Canada}
 }
 
 % Keywords
 \keywords{Machine Learning, Model Souping}
 
 \begin{abstract}
-Model souping is a post-training update technique in which the parameters of models are averaged, often leading to improved performance over constituent models without increasing inference cost. However, the specific conditions required for success are not well understood, particularly regarding the trade-off between model diversity and stability. We present a systematic analysis of over 5,000 binary ResNet-50 soups trained on CIFAR-100. To precisely control the diversity of our model ingredients, we generate pairs by branching off a shared baseline training trajectory at varying epochs, creating a spectrum of similarity ranging from near-identical to fully independent. We find that effective souping requires a specific balance: models must be similar enough to avoid model collapse, but dissimilar enough to yield meaningful improvements. Furthermore, we find that souping is largely transitive, providing empirical support for the hypothesis that souping works by averaging within connected low-loss basins. Finally, we observe that soup gains on corrupted data are strongly correlated with those on in-distribution data, suggesting that souping enhances robustness alongside accuracym without requiring additional test-time compute. Our findings provide insight into the mechanisms behind souping and offer practical advice for selecting model ingredients. Code and experiments are available at: \url{https://anonymous.4open.science/r/too-salty-478E/}.
+Model souping is a post-training technique where the parameters of models are averaged, often leading to improved performance over constituent models without increasing inference cost. However, the specific conditions required for success are not well understood, particularly regarding the trade-off between model diversity and stability. We analyse over 5,000 two-model ResNet-50 soups trained on CIFAR-100, with diversity controlled by branching ingredients from a shared training trajectory at varying epochs. We find that effective souping requires a balance: models must be similar enough to avoid model collapse, but diverse enough to yield improvements. We show that we can predict soupability relatively well with standard similarity metrics. Furthermore, we provide empirical evidence for the hypothesis that souping works by averaging within a low-loss basin by showing that souping is moderately transitive. We also observe that soup gains on corrupted data are strongly correlated with those on in-distribution data. Our findings yield practical advice for machine learning practitioners: if you want a tasty soup, use the right cooking time! Code and experiments are available at: \url{https://github.com/chipnbits/too-salty}.
 \end{abstract}
+
 
 \maketitle

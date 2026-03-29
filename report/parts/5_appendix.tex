@@ -13,26 +13,21 @@ Following the work from~\citet{gitrebasin}, we investigate whether permuting the
 
 We align all $5,346$ pairs of models using \texttt{rebasin} and compute the soup gain after alignment. Prior to permutation, $14.25\%$ of soups were positive, while after permutation, $14.32\%$ of soups were positive. However, $7\%$ of soups obtained a loss higher than $5$, which is worse than the loss of any previous soup. We plot the cumulative distribution function (CDF) of the difference in soup gain before and after permutation in Figure~\ref{fig:permutated_vs_soup_gain_cdf}. This plot shows that while permuting can sometimes help, it does not do so consistently. Further, the median difference in soup gain is approximately zero, indicating that permuting does not have a significant effect on the effectiveness of souping in our experiments. There also remains a significant risk of severe degradation. Thus, we conclude that `matching weights' permutation does not make a noticeable different to soupability in our setting.
 
-\begin{figure}[ht]
+\begin{figure}[tb]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/permutated_vs_soup_gain_cdf.pdf}
     \caption{Cumulative distribution function (CDF) of the difference in soup gain before and after permutation alignment using \texttt{rebasin}. This ignores the $7\%$ of soups with a loss higher than 5 after permutation as these make the plot difficult to interpret. The remaining mean and median difference is approximately zero, indicating that permutation alignment does not have a significant effect on the effectiveness of souping in our experiments. While some soups benefit from permutation alignment, others are negatively affected, leading to an overall negligible impact while there is a risk of severe degradation.}
     \label{fig:permutated_vs_soup_gain_cdf}
-    \Description{A line plot figure showing cumulative distribution function of the difference in soup gain before and after permutation alignment using rebasin.}
+    % \Description{A line plot figure showing cumulative distribution function of the difference in soup gain before and after permutation alignment using rebasin.}
 \end{figure}
 
 
-\newpage
-\subsection{Training Details for CIFAR-100 with ResNet-50}
+% \newpage
+% \subsection{Training Details for CIFAR-100 with ResNet-50}
 
-\begin{figure}[ht]
-    \centering
-    \includegraphics[width=0.8\linewidth]{./figures/branching_models.drawio.pdf}
-    \caption{Branching of fine-tuned models from baseline checkpoints. A single baseline model is trained, with checkpoints saved every 10 epochs. From each checkpoint, 4 variants are trained with different optimizer hyper-parameter perturbations.}\label{fig:evolution}
-    \Description{A diagram showing the branching of fine-tuned models from baseline checkpoints. A single baseline model is trained, with checkpoints saved every 10 epochs. From each checkpoint, 4 variants are trained with different optimizer hyper-parameter perturbations.}
-\end{figure}
 
-\begin{table}[ht]
+
+\begin{table}[tb]
 \centering
 
 
@@ -49,7 +44,7 @@ Model 4 & 0.5373 & 0.8594 & 0.9078 \\
 \caption{Optimizer perturbation scales applied during finetuning from the baseline ResNet-50 checkpoint on CIFAR-100. Each model scales the original SGD hyperparameters multiplicatively.}\label{tab:optimizer_perturbations}
 \end{table}
 
-\begin{table}[ht]
+\begin{table}[H]
 \centering
 
 \begin{tabular}{lll}
@@ -84,7 +79,7 @@ Training
 & Mixed precision     & No \\
 \bottomrule
 \end{tabular}
-\caption{Training hyperparameters for CIFAR-100 with ResNet-50.}\label{tab:hyperparams_baseline}
+\caption{Training hyperparameters for CIFAR-100 with ResNet-50. A randomization seed of 42 is used unless otherwise specified.}\label{tab:hyperparams_baseline}
 \end{table}
 
 % Model 4
@@ -112,46 +107,176 @@ Training
 \clearpage
 \subsection{Further Details on Experiments}
 
-\begin{figure}[ht]
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{./figures/soup_gain_quantiles_vs_shared_epochs_with_ci.pdf}
+    \caption{Quantiles of soup gain vs shared epochs with soup gain measured as the reduction in loss vs the best parent. Similar to the conclusions from~\ref{fig:soup_gain_probabilities}, we find model collapse almost never occurs past shared epochs 250.}\label{fig:soup_gain_quantiles_loss}
+    \includegraphics[width=0.5\linewidth]{./figures/combined_prob_and_conditional_gain_with_ci.pdf}
+    \caption{Probability of positive soup gain and conditional expected gain vs shared epochs. We find that the expected soup gain noisy, but is maximised in an ideal window of shared epochs. Past this point, and models are too similar, leading to minimal gains. Before this point, models are incompatible and rarely yield positive gain.}\label{fig:soup_gain_conditional_exp}
+    % \Description{A series of scatter plot figures showing soup gain against various similarity and distance metrics between pairs of models, with Spearman correlation values.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{./figures/model_collapse_vs_shared_epochs_with_ci.pdf}
+    \caption{We plot both the probability of model collapse and the probability that soup gain is positive over varying shared epochs, with 95\% bootstrapped confidence intervals. Model collapse is defined as the soup attaining less than $5\%$ test accuracy. Both model collapse and negative soup gain decrease with shared epochs. In particular, model collapse is very rare past epoch 200 and never occurs past epoch 250.}\label{fig:model_collapse}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{./figures/shared_epochs_vs_kl_mean_std.pdf}
+    \caption{Shared epochs vs KL divergence. We plot the mean and standard deviation over each value of shared epochs. The full data has a Spearman correlation of $-0.67$. We conclude that we can noisily recover the number of shared epochs by measuring the KL divergence, and that model similarity can be controlled imprecisely by varying the number of shared epochs. }\label{fig:kl_shared_epochs}
+\end{figure}
+
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/soup_gain_vs_all_metrics.png}
     \caption{Soup gain vs various similarity and distance metrics between pairs of models. Each subplot shows the soup gain against one metric, with the Spearman correlation. All metrics perform similarly. We conclude that the more similar models are, the more likely souping is to not cause model collapse.}\label{fig:soup_gain_vs_all_metrics}
     \includegraphics[width=0.5\linewidth]{./figures/soup_gain_vs_all_metrics_positive_soups.png}
     \caption{Soup gain vs various similarity and distance metrics between pairs of models, for the subset of soups with positive soup gain. Each subplot shows the soup gain against one metric, with the Spearman correlation. Each metric correlates similarly with soup gain. We see that when models are very similar, soup gain is small, while more dissimilar models can yield larger soup gains.}\label{fig:soup_gain_vs_all_metrics_positive_soups}
-    \Description{A series of scatter plot figures showing soup gain against various similarity and distance metrics between pairs of models, with Spearman correlation values.}
+    % \Description{A series of scatter plot figures showing soup gain against various similarity and distance metrics between pairs of models, with Spearman correlation values.}
 \end{figure}
 
-\begin{figure}[ht]
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{./figures/soup_gain_vs_all_metrics.png}
+    \caption{Soup gain vs various similarity and distance metrics between pairs of models. Each subplot shows the soup gain against one metric, with the Spearman correlation. All metrics perform similarly. We conclude that the more similar models are, the more likely souping is to not cause model collapse.}\label{fig:soup_gain_vs_all_metrics}
+    \includegraphics[width=0.5\linewidth]{./figures/soup_gain_vs_all_metrics_positive_soups.png}
+    \caption{Soup gain vs various similarity and distance metrics between pairs of models, for the subset of soups with positive soup gain. Each subplot shows the soup gain against one metric, with the Spearman correlation. Each metric correlates similarly with soup gain. We see that when models are very similar, soup gain is small, while more dissimilar models can yield larger soup gains.}\label{fig:soup_gain_vs_all_metrics_positive_soups}
+    % \Description{A series of scatter plot figures showing soup gain against various similarity and distance metrics between pairs of models, with Spearman correlation values.}
+\end{figure}
+
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/transitivity_min.png}
     \caption{Scatterplot of the soup gain of models $B$ and $C$ against the minimum soup gain of models $A$ with $B$ and $C$. Each point represents a triplet of models $(A, B, C)$. We observe a positive Spearman correlation of 0.64, suggesting that souping is fuzzily transitive. The correlation with the mean soup gain is lower, at 0.49.}
     \label{fig:transitivity_min}
-    \Description{A scatter plot figure showing the soup gain of models B and C against the minimum soup gain of models A with B and C.}
+    % \Description{A scatter plot figure showing the soup gain of models B and C against the minimum soup gain of models A with B and C.}
 \end{figure}
 
-\begin{figure}[ht]
+\begin{table}[t]
+\centering
+\caption{Transitivity failure vs shared epochs over all $(A,B,C)$ triples. 
+Here $n$ denotes the number of triples in the bin for which two soups are positive, and 
+$p_{\text{fail}}$ is the proportion of those triples for which the remaining soup is negative. 
+Failure rates are lowest for very small and very large shared prefixes, with a peak at intermediate shared epochs, but no monotonic trend is observed.}
+\label{tab:shared_epoch_triples_transitivity}
+\begin{tabular}{lrr}
+\toprule
+Shared epochs (ABC) & $n$ & $p_{\text{fail}}$ \\
+\midrule
+150--180 & 2294 & 0.071 \\
+180--200 & 1887 & 0.075 \\
+200--220 & 1657 & 0.119 \\
+220--240 & 1244 & 0.104 \\
+240--300 & 1369 & 0.055 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Transitivity failure vs branching-epoch difference $|B{-}C|$. 
+Here $n$ and $p_{\text{fail}}$ are defined as in Table~\ref{tab:shared_epoch_triples_transitivity}. 
+We restrict to triples with shared epochs in $[200,220]$, fix the lowest-epoch model, and vary the branching-epoch difference of the remaining two models. 
+We observe no clear dependence of transitivity failure on epoch difference within this regime. Similar trends were observed for the other bins which are omitted for brevity.}
+\label{tab:epoch_diff_triples_transitivity}
+\begin{tabular}{lrr}
+\toprule
+Epoch diff (BC) & $n$ & $p_{\text{fail}}$ \\
+\midrule
+0--10   & 792 & 0.124 \\
+10--20  & 497 & 0.123 \\
+20--30  & 419 & 0.124 \\
+30--50  & 578 & 0.080 \\
+50--100 & 369 & 0.100 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/soup_test_vs_corrupted.png}
     \caption{Scatterplot of the soup gain on test vs corrupted data. There is a clear sub-linear trend with strong correlation. Such a close relationship is sensitive to the nature of the distribution shift. This plot mostly shows that when model collapse occurs on the original test set, it also occurs on the corrupted data.}
     \label{fig:test_vs_corrupted}
-    \Description{A scatter plot figure showing the soup gain on test vs corrupted data.}
+    % \Description{A scatter plot figure showing the soup gain on test vs corrupted data.}
 \end{figure}
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/soup_positive_gain_prob.pdf}
     \caption{Probability of positive gain for soups as a function of the number of shared epochs. We see that the probability of positive gain increases with the number of shared epochs, for both clean and corrupted data. However,the corrupted data consistently has a slightly lower probability of positive gain. Thus, while souping also helps on corrupted data, it is slightly less effective than on clean data.}
     \label{fig:soup_corrupted_positive_gain_prob}
-    \Description{A line plot figure showing probability of positive gain for soups as a function of the number of shared epochs, for both clean and corrupted data.}
+    % \Description{A line plot figure showing probability of positive gain for soups as a function of the number of shared epochs, for both clean and corrupted data.}
 \end{figure}
 
-\begin{figure}[ht]
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\linewidth]{./figures/soup_test_vs_corrupted_pos_soups.png}
+  \caption{Plot of soup gain on test vs corrupted data for only models with positive soup gain on the test set. Spearman correlation of 0.61. 
+  % There is a moderate correlation. In general, when souping helps on the test set, it helps on corrupted data.
+  }\label{fig:test_vs_corrupted_pos}
+  % \Description{A scatter plot figure showing soup gain on test vs corrupted data for only models with positive soup gain on the test set.}
+\end{figure}
+
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/soup_robustness_cdf.png}
     \caption{CDF of the difference in \emph{robustness gap} before and after souping. The robustness gap is defined as the difference in loss between the test set and the corrupted set. The robustness gap before souping is taken as the minimum robustness gap of the parents. We see a fairly symmetric distribution. It has mean -0.04 and median 0.02. We therefore conclude that souping does not systematically improve the robustness gap.}
     \label{fig:soup_robustness_cdf}
-    \Description{A line plot figure showing CDF of the difference in robustness gap before and after souping.}
+    % \Description{A line plot figure showing CDF of the difference in robustness gap before and after souping.}
 \end{figure}
+
+\subsection{SWA Experiment Runs}\label{appendix:SWA_results}
+Baseline training was performed using the same hyper-parameters as in \ref{tab:hyperparams_baseline} and using the top validation model. We compare to SWA starting at epoch 220 from the same base model. The initialization and batch ordering seeds with full results are shown below in \ref{tab:swa_results}.
+
+\begin{table}[H]
+\centering
+\setlength{\tabcolsep}{3.5pt}
+
+\begin{tabular}{lcccccc|cccccc}
+\toprule
+& \multicolumn{6}{c}{\textbf{Clean Data}} & \multicolumn{6}{c}{\textbf{Corrupted Data}} \\
+\cmidrule(lr){2-7} \cmidrule(lr){8-13}
+& \multicolumn{3}{c}{Accuracy ($\uparrow$)} & \multicolumn{3}{c}{Loss ($\downarrow$)} & \multicolumn{3}{c}{Accuracy ($\uparrow$)} & \multicolumn{3}{c}{Loss ($\downarrow$)} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13}
+Seed & Base & SWA & $\Delta$ & Base & SWA & $\Delta$ & Base & SWA & $\Delta$ & Base & SWA & $\Delta$ \\
+\midrule
+42 & 78.39 & 79.84 & \textbf{+1.45} & 1.02 & 0.90 & \textbf{-0.12} & 50.88 & 54.05 & \textbf{+3.17} & 2.37 & 2.63 & +0.26 \\
+43 & 78.04 & 79.81 & \textbf{+1.77} & 1.03 & 0.87 & \textbf{-0.16} & 50.82 & 54.47 & \textbf{+3.65} & 2.35 & 2.51 & +0.16 \\
+44 & 78.87 & 80.64 & \textbf{+1.77} & 1.00 & 0.86 & \textbf{-0.14} & 51.31 & 55.26 & \textbf{+3.95} & 2.36 & 2.57 & +0.21 \\
+45 & 78.57 & 80.18 & \textbf{+1.61} & 1.00 & 0.86 & \textbf{-0.14} & 50.76 & 54.59 & \textbf{+3.83} & 2.39 & 2.60 & +0.21 \\
+46 & 78.04 & 79.42 & \textbf{+1.38} & 1.02 & 0.89 & \textbf{-0.13} & 51.06 & 54.46 & \textbf{+3.40} & 2.35 & 2.57 & +0.22 \\
+47 & 78.47 & 80.38 & \textbf{+1.91} & 1.01 & 0.88 & \textbf{-0.13} & 51.51 & 55.28 & \textbf{+3.77} & 2.35 & 2.56 & +0.21 \\
+48 & 78.21 & 79.85 & \textbf{+1.64} & 1.02 & 0.90 & \textbf{-0.12} & 50.37 & 54.29 & \textbf{+3.92} & 2.40 & 2.62 & +0.22 \\
+49 & 78.57 & 80.27 & \textbf{+1.70} & 1.01 & 0.88 & \textbf{-0.13} & 51.62 & 56.05 & \textbf{+4.43} & 2.33 & 2.44 & +0.11 \\
+50 & 78.97 & 79.88 & \textbf{+0.91} & 1.00 & 0.89 & \textbf{-0.11} & 51.59 & 55.00 & \textbf{+3.41} & 2.34 & 2.56 & +0.22 \\
+51 & 78.09 & 79.87 & \textbf{+1.78} & 1.03 & 0.89 & \textbf{-0.14} & 51.52 & 55.25 & \textbf{+3.73} & 2.32 & 2.52 & +0.20 \\
+52 & 78.48 & 79.86 & \textbf{+1.38} & 1.02 & 0.89 & \textbf{-0.13} & 51.05 & 54.22 & \textbf{+3.17} & 2.37 & 2.65 & +0.28 \\
+53 & 78.55 & 80.26 & \textbf{+1.71} & 1.02 & 0.88 & \textbf{-0.14} & 51.77 & 55.42 & \textbf{+3.65} & 2.31 & 2.50 & +0.19 \\
+\midrule
+Mean & 78.44 & 80.02 & \textbf{+1.58} & 1.01 & 0.88 & \textbf{-0.13} & 51.19 & 54.86 & \textbf{+3.67} & 2.35 & 2.56 & +0.21 \\
+Std & 0.30 & 0.33 & 0.27 & 0.01 & 0.01 & 0.01 & 0.43 & 0.60 & 0.36 & 0.03 & 0.06 & 0.04 \\
+\bottomrule
+\end{tabular}
+
+
+\caption{Comparison of basline and SWA models branching from Epoch 220.}\label{tab:swa_results}
+\end{table}
+
+\subsection{Binary Model Soup Accuracy Curves}
+While our experiments make a statistical analysis on the characteristics of even-weighted binary soups, we verify the validity of our simplifying assumptions with characteristic accuracy curves across $16$ binary pairs to support our claim that even-weighted soups are a good measure for performance. For soups exhibiting model collapse, the measure is much more accurate, while for positive gain soups the metric is indicative of soupability but not as accurate for actual souping gain.
+
+\begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.95\linewidth]{./figures/alpha_sweep_grid.png}
+    \caption{Souping characteristics across a range of parameter interpolation values for 16 models.}
+    \label{fig:soup_weghts}
+    % \Description{16 plots showing the accuracy across interpolation weights for both successful and collapsed soups.}
+\end{figure}
+
 
 \subsection{Details for Model Embedding Creation}\label{sec:model_embedding_creation}
 

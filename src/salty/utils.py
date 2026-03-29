@@ -1,16 +1,29 @@
 import copy
 import math
 import os
+import random
 from pathlib import Path
 
 import einops
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.functional as F
 import yaml
 
 import wandb
 from salty.datasets import CIFAR100_MEAN, CIFAR100_STD
+
+
+def set_seed(seed: int) -> None:
+    """Set all random seeds for reproducibility."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    print(f"Set random seed to {seed}")
 
 
 def normalize_cifar100(tensor):
@@ -233,3 +246,25 @@ def soup_models(modelA, modelB, alpha=0.5):
 
     soup_model.load_state_dict(soup_state_dict)
     return soup_model
+
+
+def ternary_soup_state_dict(state_dicts, weights):
+    """
+    Compute a convex combination of N model state_dicts.
+
+    Args:
+        state_dicts: List of state_dicts (all must have identical keys)
+        weights: List of floats summing to 1.0
+
+    Returns:
+        A new state_dict with blended parameters.
+    """
+    assert len(state_dicts) == len(weights)
+    base = state_dicts[0]
+    blended = {}
+    for key in base.keys():
+        if torch.is_floating_point(base[key]):
+            blended[key] = sum(w * sd[key] for w, sd in zip(weights, state_dicts))
+        else:
+            blended[key] = base[key]
+    return blended

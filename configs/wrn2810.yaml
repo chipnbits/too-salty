@@ -1,0 +1,40 @@
+project_name: "cifar100-wrn2810"
+run_name: "baseline-wrn2810"
+
+seed: 42
+
+data:
+  dataset: "cifar100"
+  num_classes: 100
+  augment: true
+  validation_split: 0.05
+  split_seed: 42
+
+model:
+  name: "wrn-28-10"
+  pretrained: false
+  checkpoint_path: null
+  dropout: 0.3  # WRN-28-10-dropout achieves 18.85% error on CIFAR-100
+
+training:
+  epochs: 200
+  batch_size: 128
+  num_workers: 4
+  mixed_precision: false
+
+optimizer:
+  name: "SGD"
+  lr: 0.1
+  momentum: 0.9
+  weight_decay: 0.0005
+  nesterov: true
+
+scheduler:
+  name: "MultiStepLR"
+  milestones: [60, 120, 160]  # From WRN paper (Zagoruyko & Komodakis, 2016)
+  gamma: 0.2
+
+logging:
+  log_interval: 50
+  val_interval: 1
+  checkpoint_interval: 50
