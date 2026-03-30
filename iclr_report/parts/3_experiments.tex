@@ -44,7 +44,7 @@ We train a baseline model for image classification on the CIFAR-100 dataset with
 %   \end{minipage}
 % \end{figure}
 
-Figure~\ref{fig:soup_gain_cdf} shows the CDF of soup gains.Many soups have extreme behaviour, with $40\%$ of soups losing over 60\% and only $14\%$ with positive gain. There is also a sharp transition to collapse, with only $20\%$ soups between $-70\%$ and $-20\%$ gain. Grouping by the shared number of training epochs before branching (e.g., ingredients branched at epochs 50 and 100 share 50 epochs), we find the probability of positive soup gain generally increases with shared epochs, reaching around $80\%$ after 280 shared epochs, see Figure~\ref{fig:soup_gain_probabilities}. At this stage, no soups drop accuracy by more than $5\%$. However, peak gains $(>0.5\%)$ require a balance; if shared training is too extensive ingredients are not diverse enough, performance diminishes. Further analysis on mean gain, loss metrics, and model collapse is provided in Appendices~\ref{fig:soup_gain_conditional_exp}, ~\ref{fig:soup_gain_quantiles_loss} and~\ref{fig:model_collapse}.
+Figure~\ref{fig:soup_gain_cdf} shows the CDF of soup gains.Many soups have extreme behaviour, with $40\%$ of soups losing over 60\% and only $14\%$ with positive gain. There is also a sharp transition to collapse, with only $20\%$ soups between $-70\%$ and $-20\%$ gain. Grouping by the shared number of training epochs before branching (e.g., ingredients branched at epochs 50 and 100 share 50 epochs), we find the probability of positive soup gain generally increases with shared epochs, reaching around $80\%$ after 280 shared epochs, see Figure~\ref{fig:soup_gain_probabilities}. At this stage, no soups drop accuracy by more than $5\%$. However, peak gains $(>0.5\%)$ require a balance; if shared training is too extensive ingredients are not diverse enough, performance diminishes. Further analysis on mean gain, loss metrics, and model collapse is provided in Figures~\ref{fig:soup_gain_conditional_exp}, ~\ref{fig:soup_gain_quantiles_loss} and~\ref{fig:model_collapse}.
  
 \begin{figure}[ht]
   \centering
@@ -94,7 +94,7 @@ To test if soupability is predictable, we compute a variety of similarity and di
 
 \subsection{Is Souping Transitive?}
 
-To test the hypothesis that soupable models reside in the same low-loss basin, we evaluate the transitivity of model triplets $(A, B, C)$. Figure~\ref{fig:transitivity} shows that $B$ and $C$ are highly likely to soup only if $A$ soups with both $B$ and $C$. We observe a moderate positive correlation (Spearman $0.64$) between the gain of $(B,C)$ and the minimum gain of $(A, B)$ and $(A, C)$, see Figure~\ref{fig:transitivity_min}. We attempt to explain when transitivity fails in terms of the branching epochs of the vertices of a given triple, but find no clear pattern. See Appendix Tables~\ref{tab:shared_epoch_triples_transitivity} and~\ref{tab:epoch_diff_triples_transitivity}.
+To test the hypothesis that soupable models reside in the same low-loss basin, we evaluate the transitivity of model triplets $(A, B, C)$. Figure~\ref{fig:transitivity} shows that $B$ and $C$ are highly likely to soup only if $A$ soups with both $B$ and $C$. We observe a moderate positive correlation (Spearman $0.64$) between the gain of $(B,C)$ and the minimum gain of $(A, B)$ and $(A, C)$, see Figure~\ref{fig:transitivity_min}. 
 
 \begin{figure}[ht]
   \centering
@@ -114,7 +114,7 @@ To test the hypothesis that soupable models reside in the same low-loss basin, w
 
 We embed our $104$ models into 2D using soup gain as a distance metric to search for souping clusters, plotting them in Figure~\ref{fig:model_embedding}, with details found in Section~\ref{sec:model_embedding_creation}. We find all most successful soups form the edges of a single connected component of models, while there is a single dense cluster of models which are largely branched from later on in the training procedure. 
 % There are many counter-examples, but this supports the conclusion that souping is moderately transitive and successful ingredients generally lie within a single loss basin.
-Failed transitivity models exhibit a smooth but significant loss barrier, showing that the loss basin is non-convex with modes of interconnectivity, see Figure \ref{fig:transitivity_failure_raster} for detailed examples.
+Failed transitivity models exhibit a smooth but significant loss barrier, showing that the loss basin is non-convex with modes of interconnectivity, see Figure \ref{fig:transitivity_failure_raster} for detailed examples. We also find that the soup which fails transitivity in a given triple never exhibits model collapse, see Figure~\ref{fig:transitivity_neg_edge_acc_cdf}. We attempt to explain when transitivity fails in terms of the branching epochs of the vertices of a given triple, but find no clear pattern, see Appendix Tables~\ref{tab:shared_epoch_triples_transitivity} and~\ref{tab:epoch_diff_triples_transitivity}. 
 
 \subsection{Souping for Robustness to Corruption}
 
