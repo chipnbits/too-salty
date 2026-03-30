@@ -1,22 +1,18 @@
-"""Similarity metrics between two resnet models.
+"""Similarity metrics between two models.
 
 Provided functions
 - ``l2_distance(model_a, model_b, ...)``: returns SSE, L2, RMSE
 - ``cosine_similarity(...)``: returns cosine similarity between two models
-- ``logit_mse_kl(...)``: returns MSE and KL divergence between two models' logits on random inputs
 - ``probe_set_similarities(...)``: returns logit MSE/KL and CKA similarities
-- ``compare_resnet50_pair(...)``: helper that compares two ResNet-50
-  instances via `get_resnet50_model` (useful for quick checks).
+- ``compare_model_pair(...)``: helper that compares two model instances.
 """
 
 from typing import Dict, Iterable, Optional, Tuple, Generator
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-
-from .models import get_resnet50_model
-from .resnet import ResNet
 
 
 def _default_excluded_suffixes() -> Tuple[str, ...]:
@@ -24,8 +20,8 @@ def _default_excluded_suffixes() -> Tuple[str, ...]:
 
 
 def _iter_common_tensors(
-    model_a: ResNet,
-    model_b: ResNet,
+    model_a: nn.Module,
+    model_b: nn.Module,
     excluded_suffixes: Optional[Iterable[str]] = None,
 ) -> Generator[Tuple[str, torch.Tensor, torch.Tensor], None, None]:
     """Yield (key, tensor_a_cpu, tensor_b_cpu) for comparable state_dict entries.
@@ -51,8 +47,8 @@ def _iter_common_tensors(
 
 
 def l2_distance(
-    model_a: ResNet,
-    model_b: ResNet,
+    model_a: nn.Module,
+    model_b: nn.Module,
     excluded_suffixes: Optional[Iterable[str]] = None,
 ) -> Dict[str, float]:
     """Compute L2 statistics between two models' state_dict entries.
@@ -74,8 +70,8 @@ def l2_distance(
 
 
 def cosine_similarity(
-    model_a: ResNet,
-    model_b: ResNet,
+    model_a: nn.Module,
+    model_b: nn.Module,
     excluded_suffixes: Optional[Iterable[str]] = None,
 ) -> float:
     """Compute cosine similarity between two models' state_dict entries.
@@ -123,8 +119,8 @@ def _linear_cka(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
 
 
 def probe_set_similarities(
-    model_a: ResNet,
-    model_b: ResNet,
+    model_a: nn.Module,
+    model_b: nn.Module,
     probe_set: DataLoader,
     *,
     compute_logit_mse_kl: bool = True,
@@ -227,9 +223,9 @@ def probe_set_similarities(
     return result
 
 
-def compare_resnet50_pair(
-    a: ResNet,
-    b: ResNet,
+def compare_model_pair(
+    a: nn.Module,
+    b: nn.Module,
     permute: bool = False,
     probe_set: Optional[DataLoader] = None,
     *,
@@ -237,7 +233,7 @@ def compare_resnet50_pair(
     compute_cka_logits: bool = True,
     compute_cka_features: bool = True,
 ) -> Dict[str, float]:
-    """Compare two ResNet-50 models across all metrics."""
+    """Compare two models across all metrics."""
     if permute:
         raise NotImplementedError("Permutation not implemented yet.")
 

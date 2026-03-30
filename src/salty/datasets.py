@@ -85,7 +85,7 @@ def get_cifar100_loaders(
         # Apply simple data augmentation to training dataset
         train_dataset.transform = transforms.Compose(
             [
-                transforms.RandomCrop(32, padding=4),
+                transforms.RandomCrop(32, padding=4, padding_mode="reflect"),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(CIFAR100_MEAN, CIFAR100_STD),
@@ -316,6 +316,34 @@ def get_cifar100c_loaders_by_corruption(
         )
 
     return loaders
+
+
+def get_data_loaders(cfg: dict, data_dir: str = None) -> Tuple[DataLoader, DataLoader, DataLoader]:
+    """Config-driven data loader factory.
+
+    Args:
+        cfg: Full experiment config dict (must contain 'data' and 'training' sections)
+        data_dir: Override data directory (default: from DATA_DIR env or './data')
+
+    Returns:
+        Tuple of (train_loader, val_loader, test_loader)
+    """
+    if data_dir is None:
+        data_dir = os.getenv("DATA_DIR", "./data")
+
+    dataset_name = cfg["data"].get("dataset", "cifar100").lower()
+
+    if dataset_name == "cifar100":
+        return get_cifar100_loaders(
+            batch_size=cfg["training"]["batch_size"],
+            num_workers=cfg["training"]["num_workers"],
+            data_dir=data_dir,
+            val_ratio=cfg["data"].get("validation_split", 0.0),
+            seed=cfg["data"].get("split_seed", 42),
+            augment=cfg["data"].get("augment", True),
+        )
+
+    raise ValueError(f"Unknown dataset: {dataset_name}. Available: ['cifar100']")
 
 
 def get_cifar100_class_names() -> list[str]:
