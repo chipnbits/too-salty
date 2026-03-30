@@ -114,12 +114,16 @@ Training
 
 \begin{figure}[th]
     \centering
-    \includegraphics[width=0.7\linewidth]{./figures/acc_vs_gain.pdf}
+    \includegraphics[width=0.7\linewidth]{./figures/mean_parent_acc_vs_gain.pdf}
     \caption{
-    Soup accuracy vs Soup gain, restricted to only soups with soup gain greater than $-1$\% for clarity. Color corresponds to the number of shared epochs between the soup's ingredients. The relationship exhibits a strong linear relationship, with a Spearman correlation of $0.91$. We also observe straight lines of the same colour, likely denoting a series of soups with a parent in common. We conclude that using only soup gain as our metric doesn't lose much information about the soup accuracy
-    }\label{fig:acc_vs_gain}
+    Mean accuracy of a soup's parents vs Soup gain. Color corresponds to the number of shared epochs between the soup's ingredients. We observe no clear trend, other than a tail of models which collapsed with the worst parents. We thus conclude we are not missing any hidden information based on the parents' performance and it is therefore reasonable to consider the soup gain as a metric in isolation.
+    }\label{fig:mean_parent_acc_vs_gain}
+    \includegraphics[width=0.7\linewidth]{./figures/mean_parent_acc_vs_gain_restricted.pdf}
+    \caption{
+    The same plot as in Figure~\ref{fig:mean_parent_acc_vs_gain} but restricted to only include soups with soup gain greater than $-1$\% for clarity. Once again, we observe no clear pattern.
+    }\label{fig:mean_parent_acc_vs_gain_restricted}
     \includegraphics[width=0.7\linewidth]{./figures/accuracy_and_gain_cdf.pdf}
-    \caption{The empirical CDF of soup accuracy and soup gain over all our soups. The lines are nearly indistinguishable }\label{fig:clean_acc_cdf}
+    \caption{The empirical CDF of soup accuracy and soup gain over all our soups. We observe a variety of performances in an S-shape where there are few models with middling behaviour. The lines are also nearly indistinguishable. This implies that we can safely consider only soup gain without missing any effects contained in the soup accuracy.}\label{fig:clean_acc_cdf}
 \end{figure}
 
 \begin{figure}[H]
@@ -211,7 +215,7 @@ Epoch diff (BC) & $n$ & $p_{\text{fail}}$ \\
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\linewidth]{./figures/transitivity_neg_edge_acc_cdf.pdf}
-    \caption{}
+    \caption{Empirical CDF of the accuracy of the negative soup in a triangle with 2 positive edges. There are no negative soups which exhibit severe model collapse, and most attain a reasonable performance relative to our best models (> 75\%). We believe this is because with 2 positive edges, the loss basin is likely to be flatter than with 0 or 1 positive edge, and so the negative soup is unlikely to cause model collapse.}
     \label{fig:transitivity_neg_edge_acc_cdf}
 \end{figure}
 
