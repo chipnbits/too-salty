@@ -112,11 +112,11 @@ Training
 \clearpage
 \subsection{Further Details on Experiments}
 
-\begin{figure}[H]
+\begin{figure}[th]
     \centering
     \includegraphics[width=0.7\linewidth]{./figures/acc_vs_gain.pdf}
     \caption{
-    Soup accuracy vs Soup gain restricted to only soups with soup gain greater than $-1$\% for clarity. Color corresponds to the number of shared epochs between the soup's ingredients. The relationship exhibits a strong linear relationship, with Spearman correlation of $0.91$. We also observe straight lines of the same colour, likely denoting a series of soups with a parent in common.  
+    Soup accuracy vs Soup gain, restricted to only soups with soup gain greater than $-1$\% for clarity. Color corresponds to the number of shared epochs between the soup's ingredients. The relationship exhibits a strong linear relationship, with a Spearman correlation of $0.91$. We also observe straight lines of the same colour, likely denoting a series of soups with a parent in common. We conclude that using only soup gain as our metric doesn't lose much information about the soup accuracy
     }\label{fig:acc_vs_gain}
     \includegraphics[width=0.7\linewidth]{./figures/accuracy_and_gain_cdf.pdf}
     \caption{The empirical CDF of soup accuracy and soup gain over all our soups. The lines are nearly indistinguishable }\label{fig:clean_acc_cdf}
