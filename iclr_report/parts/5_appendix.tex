@@ -75,7 +75,7 @@ Optimization
 \midrule
 Learning rate schedule
 & Scheduler           & CosineAnnealingLR \\
-& $T_{\max}$          & 280 epochs \\
+& $T_{\max}$          & 300 epochs \\
 & $\eta_{\min}$       & 0 \\
 \midrule
 Training 
@@ -115,7 +115,7 @@ Training
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/soup_gain_quantiles_vs_shared_epochs_with_ci.pdf}
-    \caption{Quantiles of soup gain vs shared epochs with soup gain measured as the reduction in loss vs the best parent. Similar to the conclusions from~\ref{fig:soup_gain_probabilities}, we find model collapse almost never occurs past shared epochs 250.}\label{fig:soup_gain_quantiles_loss}
+    \caption{Quantiles of soup gain vs shared epochs with soup gain measured as the reduction in loss vs the best parent. Similar to the conclusions from~\ref{fig:soup_gain_probabilities}, we find model collapse almost never occurs past shared epochs 260.}\label{fig:soup_gain_quantiles_loss}
     \includegraphics[width=0.5\linewidth]{./figures/combined_prob_and_conditional_gain_with_ci.pdf}
     \caption{Probability of positive soup gain and conditional expected gain vs shared epochs. We find that the expected soup gain noisy, but is maximised in an ideal window of shared epochs. Past this point, and models are too similar, leading to minimal gains. Before this point, models are incompatible and rarely yield positive gain.}\label{fig:soup_gain_conditional_exp}
     % \Description{A series of scatter plot figures showing soup gain against various similarity and distance metrics between pairs of models, with Spearman correlation values.}
@@ -130,7 +130,7 @@ Training
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/shared_epochs_vs_kl_mean_std.pdf}
-    \caption{Shared epochs vs KL divergence. We plot the mean and standard deviation over each value of shared epochs. The full data has a Spearman correlation of $-0.67$. We conclude that we can noisily recover the number of shared epochs by measuring the KL divergence, and that model similarity can be controlled imprecisely by varying the number of shared epochs. }\label{fig:kl_shared_epochs}
+    \caption{Shared epochs vs KL divergence. We plot the mean and standard deviation over each value of shared epochs. The full data has a Spearman correlation of $-0.66$. We conclude that we can noisily recover the number of shared epochs by measuring the KL divergence, and that model similarity can be controlled imprecisely by varying the number of shared epochs. }\label{fig:kl_shared_epochs}
 \end{figure}
 
 \begin{figure}[H]
@@ -146,7 +146,7 @@ Training
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/transitivity_min.png}
-    \caption{Scatterplot of the soup gain of models $B$ and $C$ against the minimum soup gain of models $A$ with $B$ and $C$. Each point represents a triplet of models $(A, B, C)$. We observe a positive Spearman correlation of 0.64, suggesting that souping is fuzzily transitive. The correlation with the mean soup gain is lower, at 0.49.}
+    \caption{Scatterplot of the soup gain of models $B$ and $C$ against the minimum soup gain of models $A$ with $B$ and $C$. Each point represents a triplet of models $(A, B, C)$. We observe a positive Spearman correlation of 0.59, suggesting that souping is fuzzily transitive. The correlation with the mean soup gain is lower, at 0.48.}
     \label{fig:transitivity_min}
     % \Description{A scatter plot figure showing the soup gain of models B and C against the minimum soup gain of models A with B and C.}
 \end{figure}
@@ -194,7 +194,7 @@ Epoch diff (BC) & $n$ & $p_{\text{fail}}$ \\
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\linewidth]{./figures/ternary_simplex_all.pdf}
-    \caption{A fine grained raster image showing clean accuracy performance using a convex combination of model triplets that have failed the transitivity test. Note the left and right edges of the triangle are two-model soups that provide gain, while the third bottom edge shows mild souping failure with a smooth loss barrier in red. The green area and dashed red boundary show clean accuracy that meets or exceeds all three constituent models.}
+    \caption{A fine-resolution raster image showing clean accuracy performance over a convex combination of model triplets that have failed the transitivity test. Note the left and right edges of the triangle are two-model soups that provide gain, while the third bottom edge shows mild souping failure, with a smooth loss barrier in red. The green area and dashed red boundary show clean accuracy that meets or exceeds all three constituent models.}
     \label{fig:transitivity_failure_raster}
 \end{figure}
 
@@ -219,7 +219,7 @@ Epoch diff (BC) & $n$ & $p_{\text{fail}}$ \\
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.5\linewidth]{./figures/soup_test_vs_corrupted_pos_soups.png}
-  \caption{Plot of soup gain on test vs corrupted data for only models with positive soup gain on the test set. Spearman correlation of 0.61. 
+  \caption{Plot of soup gain on test vs corrupted data for only models with positive soup gain on the test set. Spearman correlation of 0.56. 
   % There is a moderate correlation. In general, when souping helps on the test set, it helps on corrupted data.
   }\label{fig:test_vs_corrupted_pos}
   % \Description{A scatter plot figure showing soup gain on test vs corrupted data for only models with positive soup gain on the test set.}
@@ -248,21 +248,21 @@ Baseline training was performed using the same hyper-parameters as in \ref{tab:h
 \cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13}
 Seed & Base & SWA & $\Delta$ & Base & SWA & $\Delta$ & Base & SWA & $\Delta$ & Base & SWA & $\Delta$ \\
 \midrule
-42 & 78.39 & 79.84 & \textbf{+1.45} & 1.02 & 0.90 & \textbf{-0.12} & 50.88 & 54.05 & \textbf{+3.17} & 2.37 & 2.63 & +0.26 \\
-43 & 78.04 & 79.81 & \textbf{+1.77} & 1.03 & 0.87 & \textbf{-0.16} & 50.82 & 54.47 & \textbf{+3.65} & 2.35 & 2.51 & +0.16 \\
-44 & 78.87 & 80.64 & \textbf{+1.77} & 1.00 & 0.86 & \textbf{-0.14} & 51.31 & 55.26 & \textbf{+3.95} & 2.36 & 2.57 & +0.21 \\
-45 & 78.57 & 80.18 & \textbf{+1.61} & 1.00 & 0.86 & \textbf{-0.14} & 50.76 & 54.59 & \textbf{+3.83} & 2.39 & 2.60 & +0.21 \\
-46 & 78.04 & 79.42 & \textbf{+1.38} & 1.02 & 0.89 & \textbf{-0.13} & 51.06 & 54.46 & \textbf{+3.40} & 2.35 & 2.57 & +0.22 \\
-47 & 78.47 & 80.38 & \textbf{+1.91} & 1.01 & 0.88 & \textbf{-0.13} & 51.51 & 55.28 & \textbf{+3.77} & 2.35 & 2.56 & +0.21 \\
-48 & 78.21 & 79.85 & \textbf{+1.64} & 1.02 & 0.90 & \textbf{-0.12} & 50.37 & 54.29 & \textbf{+3.92} & 2.40 & 2.62 & +0.22 \\
-49 & 78.57 & 80.27 & \textbf{+1.70} & 1.01 & 0.88 & \textbf{-0.13} & 51.62 & 56.05 & \textbf{+4.43} & 2.33 & 2.44 & +0.11 \\
-50 & 78.97 & 79.88 & \textbf{+0.91} & 1.00 & 0.89 & \textbf{-0.11} & 51.59 & 55.00 & \textbf{+3.41} & 2.34 & 2.56 & +0.22 \\
-51 & 78.09 & 79.87 & \textbf{+1.78} & 1.03 & 0.89 & \textbf{-0.14} & 51.52 & 55.25 & \textbf{+3.73} & 2.32 & 2.52 & +0.20 \\
-52 & 78.48 & 79.86 & \textbf{+1.38} & 1.02 & 0.89 & \textbf{-0.13} & 51.05 & 54.22 & \textbf{+3.17} & 2.37 & 2.65 & +0.28 \\
-53 & 78.55 & 80.26 & \textbf{+1.71} & 1.02 & 0.88 & \textbf{-0.14} & 51.77 & 55.42 & \textbf{+3.65} & 2.31 & 2.50 & +0.19 \\
+42 & 78.42 & 79.75 & \textbf{+1.33} & 1.02 & 0.89 & \textbf{-0.13} & 51.87 & 55.45 & \textbf{+3.58} & 2.32 & 2.44 & +0.12 \\
+43 & 78.04 & 79.90 & \textbf{+1.86} & 1.04 & 0.84 & \textbf{-0.20} & 50.76 & 54.89 & \textbf{+4.13} & 2.38 & 2.36 & \textbf{-0.02} \\
+44 & 78.79 & 80.81 & \textbf{+2.02} & 1.00 & 0.86 & \textbf{-0.14} & 50.83 & 54.67 & \textbf{+3.84} & 2.38 & 2.56 & +0.18 \\
+45 & 78.53 & 80.14 & \textbf{+1.61} & 1.02 & 0.87 & \textbf{-0.15} & 51.36 & 55.45 & \textbf{+4.09} & 2.34 & 2.41 & +0.07 \\
+46 & 78.49 & 80.29 & \textbf{+1.80} & 1.01 & 0.86 & \textbf{-0.14} & 51.31 & 55.13 & \textbf{+3.82} & 2.34 & 2.49 & +0.15 \\
+47 & 78.30 & 80.43 & \textbf{+2.13} & 1.02 & 0.88 & \textbf{-0.14} & 51.09 & 55.86 & \textbf{+4.77} & 2.37 & 2.52 & +0.15 \\
+48 & 78.96 & 80.13 & \textbf{+1.17} & 1.00 & 0.89 & \textbf{-0.11} & 51.36 & 55.17 & \textbf{+3.81} & 2.36 & 2.58 & +0.22 \\
+49 & 78.12 & 80.40 & \textbf{+2.28} & 1.03 & 0.86 & \textbf{-0.17} & 50.39 & 54.79 & \textbf{+4.40} & 2.38 & 2.42 & +0.04 \\
+50 & 78.26 & 79.85 & \textbf{+1.59} & 1.03 & 0.87 & \textbf{-0.16} & 51.47 & 56.06 & \textbf{+4.59} & 2.33 & 2.31 & \textbf{-0.02} \\
+51 & 77.79 & 79.58 & \textbf{+1.79} & 1.05 & 0.90 & \textbf{-0.15} & 50.28 & 55.47 & \textbf{+5.19} & 2.39 & 2.41 & +0.02 \\
+52 & 78.97 & 80.56 & \textbf{+1.59} & 0.99 & 0.83 & \textbf{-0.15} & 51.26 & 55.58 & \textbf{+4.32} & 2.35 & 2.37 & +0.02 \\
+53 & 78.25 & 79.48 & \textbf{+1.23} & 1.03 & 0.91 & \textbf{-0.11} & 50.87 & 55.47 & \textbf{+4.60} & 2.36 & 2.42 & +0.06 \\
 \midrule
-Mean & 78.44 & 80.02 & \textbf{+1.58} & 1.01 & 0.88 & \textbf{-0.13} & 51.19 & 54.86 & \textbf{+3.67} & 2.35 & 2.56 & +0.21 \\
-Std & 0.30 & 0.33 & 0.27 & 0.01 & 0.01 & 0.01 & 0.43 & 0.60 & 0.36 & 0.03 & 0.06 & 0.04 \\
+Mean & 78.41 & 80.11 & \textbf{+1.70} & 1.02 & 0.87 & \textbf{-0.15} & 51.07 & 55.33 & \textbf{+4.26} & 2.36 & 2.44 & +0.08 \\
+Std & 0.36 & 0.41 & 0.35 & 0.02 & 0.02 & 0.02 & 0.46 & 0.42 & 0.47 & 0.02 & 0.08 & 0.08 \\
 \bottomrule
 \end{tabular}
 
