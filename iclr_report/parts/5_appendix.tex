@@ -11,7 +11,8 @@
 
 Following the work from~\citet{gitrebasin}, we investigate whether permuting the neurons of models prior to souping increases the effectiveness of souping. We use the \texttt{rebasin}\footnote{\url{https://pypi.org/project/rebasin/}} package to align pairs of models before souping. This package uses the `matching weights' method which permutes the neurones by inspecting only the weights. This contrasts with `activation matching' which requires forward passes through the network, and `straight through estimators' which are even more computationally expensive. The authors find that matching weights performs similarly to activation matching while being computationally cheaper. Therefore, we only consider the matching weights method.
 
-We align all $5,346$ pairs of models using \texttt{rebasin} and compute the soup gain after alignment. Prior to permutation, $14.25\%$ of soups were positive, while after permutation, $14.32\%$ of soups were positive. However, $7\%$ of soups obtained a loss higher than $5$, which is worse than the loss of any previous soup. We plot the cumulative distribution function (CDF) of the difference in soup gain before and after permutation in Figure~\ref{fig:permutated_vs_soup_gain_cdf}. This plot shows that while permuting can sometimes help, it does not do so consistently. Further, the median difference in soup gain is approximately zero, indicating that permuting does not have a significant effect on the effectiveness of souping in our experiments. There also remains a significant risk of severe degradation. Thus, we conclude that `matching weights' permutation does not make a noticeable different to soupability in our setting.
+We align all $5,346$ pairs of models using \texttt{rebasin} and compute the soup gain after alignment. Prior to permutation, $14.25\%$ of soups were positive, while after permutation, $14.32\%$ of soups were positive. However, $7.6\%$ of soups obtained a loss higher than $5$ — worse than the loss of any soup prior to permutation. We plot the cumulative distribution function (CDF) of the difference in soup gain before and after permutation in Figure~\ref{fig:permutated_vs_soup_gain_cdf}. This plot shows that while permuting can sometimes help, it does not do so consistently. Further, the median difference in soup gain is approximately zero, indicating that permuting does not have a significant effect on the effectiveness of souping in our experiments. There also remains a significant risk of severe degradation. Thus, we conclude that `matching weights' permutation does not make a noticeable different to soupability in our setting.
+We align all $5,346$ pairs of models using \texttt{rebasin} and compute the soup gain after alignment. Prior to permutation, $11.03\%$ of soups were positive, while after permutation, $11.09\%$ of soups were positive. However, $7.6\%$ of soups obtained a loss higher than $5$ — worse than the loss of any soup prior to permutation. We plot the cumulative distribution function (CDF) of the difference in soup gain before and after permutation in Figure~\ref{fig:permutated_vs_soup_gain_cdf}. This plot shows that while permuting can sometimes help, it does not do so consistently. Further, the median difference in soup gain is approximately zero, indicating that permuting does not have a significant effect on the effectiveness of souping in our experiments. There also remains a significant risk of severe degradation. Thus, we conclude that `matching weights' permutation does not make a noticeable different to soupability in our setting.
 
 \begin{figure}[h]
     \centering
@@ -168,19 +169,19 @@ Training
 \begin{table}[t]
 \centering
 \caption{Transitivity failure vs shared epochs over all $(A,B,C)$ triples. 
-Here $n$ denotes the number of triples in the bin for which two soups are positive, and 
+Here $n$ denotes the number of triples in the bin for which at least two soups are positive, and 
 $p_{\text{fail}}$ is the proportion of those triples for which the remaining soup is negative. 
-Failure rates are lowest for very small and very large shared prefixes, with a peak at intermediate shared epochs, but no monotonic trend is observed.}
+Failure rates are highest for very small shared epochs, but no monotonic trend is observed. A sweet spot can be found in the 220--240 epoch bin, once again suggesting some diversity is beneficial.}
 \label{tab:shared_epoch_triples_transitivity}
 \begin{tabular}{lrr}
 \toprule
 Shared epochs (ABC) & $n$ & $p_{\text{fail}}$ \\
 \midrule
-150--180 & 2294 & 0.071 \\
-180--200 & 1887 & 0.075 \\
-200--220 & 1657 & 0.119 \\
-220--240 & 1244 & 0.104 \\
-240--300 & 1369 & 0.055 \\
+120--180 & 5742 & 0.214 \\
+190--190 & 2682 & 0.072 \\
+200--210 & 4386 & 0.056 \\
+220--240 & 4521 & 0.024 \\
+250--300 & 3507 & 0.042 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -189,18 +190,17 @@ Shared epochs (ABC) & $n$ & $p_{\text{fail}}$ \\
 \centering
 \caption{Transitivity failure vs branching-epoch difference $|B{-}C|$. 
 Here $n$ and $p_{\text{fail}}$ are defined as in Table~\ref{tab:shared_epoch_triples_transitivity}. 
-We restrict to triples with shared epochs in $[200,220]$, fix the lowest-epoch model, and vary the branching-epoch difference of the remaining two models. 
-We observe no clear dependence of transitivity failure on epoch difference within this regime. Similar trends were observed for the other bins which are omitted for brevity.}
+We restrict to triples with shared epochs in $[220,240]$, fix the lowest-epoch model, and vary the branching-epoch difference of the remaining two models. 
+We observe that $p_{\text{fail}}$ is lower with a greater value of $|B{-}C|$, suggesting that some diversity is beneficial, but the effect size is small.}
 \label{tab:epoch_diff_triples_transitivity}
 \begin{tabular}{lrr}
 \toprule
 Epoch diff (BC) & $n$ & $p_{\text{fail}}$ \\
 \midrule
-0--10   & 792 & 0.124 \\
-10--20  & 497 & 0.123 \\
-20--30  & 419 & 0.124 \\
-30--50  & 578 & 0.080 \\
-50--100 & 369 & 0.100 \\
+0--10 & 534 & 0.062 \\
+20--20 & 306 & 0.049 \\
+30--40 & 393 & 0.025 \\
+50--70 & 164 & 0.024 \\
 \bottomrule
 \end{tabular}
 \end{table}
