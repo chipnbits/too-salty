@@ -44,7 +44,7 @@ We train a baseline model for image classification on the CIFAR-100 dataset with
 %   \end{minipage}
 % \end{figure}
 
-Figure~\ref{fig:soup_gain_cdf} shows the cumulative distribution function (CDF) of soup gains. Many soups have extreme behaviour, with $40\%$ of soups losing over 60\% and only $14\%$ with positive gain. There is also a sharp transition to collapse, with only $15\%$ soups between $-70\%$ and $-20\%$ gain. Grouping by the shared number of training epochs before branching (e.g., ingredients branched at epochs 50 and 100 share 50 epochs), we find the probability of positive soup gain generally increases with shared epochs, reaching around $80\%$ after 260 shared epochs, see Figure~\ref{fig:soup_gain_probabilities}. At this stage, almost no soups drop accuracy by more than $5\%$. However, peak gains $(>0.5\%)$ require a balance; if shared training is too extensive ingredients are not diverse enough, performance diminishes. Further analysis on mean gain, loss metrics, and model collapse is provided in Appendices~\ref{fig:soup_gain_conditional_exp}, ~\ref{fig:soup_gain_quantiles_loss} and~\ref{fig:model_collapse}.
+Figure~\ref{fig:soup_gain_cdf} shows the cumulative distribution function (CDF) of soup gains. Many soups have extreme behaviour, with $40\%$ of soups losing over 60\% and only $14\%$ with positive gain. There is also a sharp transition to collapse, with only $20\%$ soups between $-70\%$ and $-20\%$ gain. Grouping by the shared number of training epochs before branching (e.g., ingredients branched at epochs 50 and 100 share 50 epochs), we find the probability of positive soup gain generally increases with shared epochs, reaching around $80\%$ after 280 shared epochs, see Figure~\ref{fig:soup_gain_probabilities}. At this stage, no soups drop accuracy by more than $5\%$. However, peak gains $(>0.5\%)$ require a balance; if shared training is too extensive ingredients are not diverse enough, performance diminishes. Further analysis on mean gain, loss metrics, and model collapse is provided in Appendices~\ref{fig:soup_gain_conditional_exp}, ~\ref{fig:soup_gain_quantiles_loss} and~\ref{fig:model_collapse}.
  
 \begin{figure}[ht]
   \centering
@@ -68,7 +68,7 @@ Figure~\ref{fig:soup_gain_cdf} shows the cumulative distribution function (CDF) 
 
 \subsection{Predicting Soupability with Similarity}
 
-To test if soupability is predictable, we compute a variety of similarity and distance metrics between model pairs. All metrics perform similarly, see Figure~\ref{fig:soup_gain_vs_all_metrics}. Using KL divergence between the outputs of the ingredients as an example, we find a strong negative correlation with soup gain (Spearman $-0.86$), indicating divergence often leads to model collapse, see Figure~\ref{fig:soup_gain_vs_kl_logits}. However among positive soups, gain has a moderate positive correlation with dissimilarity (Spearman 0.39), see Figure~\ref{fig:soup_gain_vs_kl_positive_soups}. Effective souping requires models to be sufficiently similar, but also rewards variety. Balancing these two effects is key to tasty soups. Additionally, shared epochs correlate strongly with all similarity metrics, for example (Spearman $-0.67$) with KL divergence, more details shown in Appendix~\ref{fig:kl_shared_epochs}.
+To test if soupability is predictable, we compute a variety of similarity and distance metrics between model pairs. All metrics perform similarly, see Figure~\ref{fig:soup_gain_vs_all_metrics}. Using KL divergence between the outputs of the ingredients as an example, we find a strong negative correlation with soup gain (Spearman $-0.88$), indicating divergence often leads to model collapse, see Figure~\ref{fig:soup_gain_vs_kl_logits}. However among positive soups, gain has a moderate positive correlation with dissimilarity (Spearman 0.16), see Figure~\ref{fig:soup_gain_vs_kl_positive_soups}. Effective souping requires models to be sufficiently similar, but also rewards variety. Balancing these two effects is key to tasty soups. Additionally, shared epochs correlate strongly with all similarity metrics, for example (Spearman $-0.67$) with KL divergence, more details shown in Appendix~\ref{fig:kl_shared_epochs}.
 
 % This includes the l2 distance and cosine similarity on a vector of the model parameters, the Kullback-Leibler (KL) divergence between the output logits on the test set, the mean squared error (MSE) between the output logits on the test set, and the Centered Kernel Alignment (CKA)~\citep{SimilarityCKA} between the logits and the penultimate layer activations on the test set. 
 
@@ -79,13 +79,13 @@ To test if soupability is predictable, we compute a variety of similarity and di
   \begin{minipage}[t]{0.48\linewidth}
     \centering
     \includegraphics[width=\linewidth]{./figures/soup_gain_vs_kl.png}
-    \caption{KL vs soup gain (Spearman $-0.86$).}
+    \caption{KL vs soup gain (Spearman $-0.88$).}
     \label{fig:soup_gain_vs_kl_logits}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\linewidth}
     \centering
     \includegraphics[width=\linewidth]{./figures/soup_gain_vs_kl_positive_soups.png}
-    \caption{KL vs $(+)$ soup gain (Spearman $0.39$).}
+    \caption{KL vs $(+)$ soup gain (Spearman $0.16$).}
     \label{fig:soup_gain_vs_kl_positive_soups}
   \end{minipage}
 \end{figure}
@@ -112,7 +112,9 @@ To test the hypothesis that soupable models reside in the same low-loss basin, w
   \end{minipage}
 \end{figure}
 
-We embed our $104$ models into 2D using soup gain as a distance metric to search for souping clusters, plotting them in Figure~\ref{fig:model_embedding}, with details found in Section~\ref{sec:model_embedding_creation}. We find all most successful soups form the edges of a single connected component of models, while there is a single dense cluster of models which are largely branched from later on in the training procedure. There are many counter-examples, but this supports the conclusion that souping is moderately transitive and successful ingredients generally lie within a single loss basin.
+We embed our $104$ models into 2D using soup gain as a distance metric to search for souping clusters, plotting them in Figure~\ref{fig:model_embedding}, with details found in Section~\ref{sec:model_embedding_creation}. We find all most successful soups form the edges of a single connected component of models, while there is a single dense cluster of models which are largely branched from later on in the training procedure. 
+% There are many counter-examples, but this supports the conclusion that souping is moderately transitive and successful ingredients generally lie within a single loss basin.
+Failed transitivity models exhibit a smooth but significant loss barrier, showing that the loss basin is non-convex with modes of interconnectivity, see Figure \ref{fig:transitivity_failure_raster} for detailed examples.
 
 \subsection{Souping for Robustness to Corruption}
 
@@ -134,7 +136,7 @@ Here we compare the improvements to SWA in Tab. \ref{tab:swa_compare}. SWA offer
 \addlinespace
 \textbf{Soups: 250 Epochs} & $51.2\% \pm 9.9\%$ & $0.16\% \pm 0.04\%$ & $0.05\% \pm 0.08\%$ \\
 \addlinespace
-\textbf{SWA} (12 Runs) & $100\%$ & $1.6\% \pm 0.3\%$ & $3.7\% \pm 0.4\%$ \\
+\textbf{SWA} (12 Runs) & $100\%$ & $1.7\% \pm 0.3\%$ & $4.3\% \pm 0.5\%$ \\
 \bottomrule
 \end{tabular}
 \caption{Comparison of souping robustness to SWA.}

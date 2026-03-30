@@ -142,14 +142,6 @@ Training
     % \Description{A series of scatter plot figures showing soup gain against various similarity and distance metrics between pairs of models, with Spearman correlation values.}
 \end{figure}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.5\linewidth]{./figures/soup_gain_vs_all_metrics.png}
-    \caption{Soup gain vs various similarity and distance metrics between pairs of models. Each subplot shows the soup gain against one metric, with the Spearman correlation. All metrics perform similarly. We conclude that the more similar models are, the more likely souping is to not cause model collapse.}\label{fig:soup_gain_vs_all_metrics}
-    \includegraphics[width=0.5\linewidth]{./figures/soup_gain_vs_all_metrics_positive_soups.png}
-    \caption{Soup gain vs various similarity and distance metrics between pairs of models, for the subset of soups with positive soup gain. Each subplot shows the soup gain against one metric, with the Spearman correlation. Each metric correlates similarly with soup gain. We see that when models are very similar, soup gain is small, while more dissimilar models can yield larger soup gains.}\label{fig:soup_gain_vs_all_metrics_positive_soups}
-    % \Description{A series of scatter plot figures showing soup gain against various similarity and distance metrics between pairs of models, with Spearman correlation values.}
-\end{figure}
 
 \begin{figure}[H]
     \centering
@@ -198,6 +190,13 @@ Epoch diff (BC) & $n$ & $p_{\text{fail}}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{./figures/ternary_simplex_all.pdf}
+    \caption{A fine grained raster image showing clean accuracy performance using a convex combination of model triplets that have failed the transitivity test. Note the left and right edges of the triangle are two-model soups that provide gain, while the third bottom edge shows mild souping failure with a smooth loss barrier in red. The green area and dashed red boundary show clean accuracy that meets or exceeds all three constituent models.}
+    \label{fig:transitivity_failure_raster}
+\end{figure}
 
 
 
