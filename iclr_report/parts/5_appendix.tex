@@ -13,7 +13,7 @@ Following the work from~\citet{gitrebasin}, we investigate whether permuting the
 
 We align all $5,346$ pairs of models using \texttt{rebasin} and compute the soup gain after alignment. Prior to permutation, $14.25\%$ of soups were positive, while after permutation, $14.32\%$ of soups were positive. However, $7\%$ of soups obtained a loss higher than $5$, which is worse than the loss of any previous soup. We plot the cumulative distribution function (CDF) of the difference in soup gain before and after permutation in Figure~\ref{fig:permutated_vs_soup_gain_cdf}. This plot shows that while permuting can sometimes help, it does not do so consistently. Further, the median difference in soup gain is approximately zero, indicating that permuting does not have a significant effect on the effectiveness of souping in our experiments. There also remains a significant risk of severe degradation. Thus, we conclude that `matching weights' permutation does not make a noticeable different to soupability in our setting.
 
-\begin{figure}[tb]
+\begin{figure}[h]
     \centering
     \includegraphics[width=0.5\linewidth]{./figures/permutated_vs_soup_gain_cdf.pdf}
     \caption{Cumulative distribution function (CDF) of the difference in soup gain before and after permutation alignment using \texttt{rebasin}. This ignores the $7\%$ of soups with a loss higher than 5 after permutation as these make the plot difficult to interpret. The remaining mean and median difference is approximately zero, indicating that permutation alignment does not have a significant effect on the effectiveness of souping in our experiments. While some soups benefit from permutation alignment, others are negatively affected, leading to an overall negligible impact while there is a risk of severe degradation.}
@@ -114,46 +114,48 @@ Training
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{./figures/acc_vs_gain.pdf}
-    \caption{}\label{fig:acc_vs_gain}
-    \includegraphics[width=0.5\linewidth]{./figures/accuracy_and_gain_cdf.pdf}
-    \caption{}\label{fig:clean_acc_cdf}
+    \includegraphics[width=0.7\linewidth]{./figures/acc_vs_gain.pdf}
+    \caption{
+    Soup accuracy vs Soup gain restricted to only soups with soup gain greater than $-1$\% for clarity. Color corresponds to the number of shared epochs between the soup's ingredients. The relationship exhibits a strong linear relationship, with Spearman correlation of $0.91$. We also observe straight lines of the same colour, likely denoting a series of soups with a parent in common.  
+    }\label{fig:acc_vs_gain}
+    \includegraphics[width=0.7\linewidth]{./figures/accuracy_and_gain_cdf.pdf}
+    \caption{The empirical CDF of soup accuracy and soup gain over all our soups. The lines are nearly indistinguishable }\label{fig:clean_acc_cdf}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{./figures/soup_gain_quantiles_vs_shared_epochs_with_ci.pdf}
-    \caption{Quantiles of soup gain vs shared epochs with soup gain measured as the reduction in loss vs the best parent. Similar to the conclusions from~\ref{fig:soup_gain_probabilities}, we find model collapse almost never occurs past shared epochs 260.}\label{fig:soup_gain_quantiles_loss}
-    \includegraphics[width=0.5\linewidth]{./figures/combined_prob_and_conditional_gain_with_ci.pdf}
+    \includegraphics[width=0.7\linewidth]{./figures/soup_gain_quantiles_vs_shared_epochs_with_ci.pdf}
+    \caption{Quantiles of soup gain vs shared epochs with soup gain measured as the reduction in loss vs the best parent. Similar to the conclusions from Figure~\ref{fig:soup_gain_probabilities}, we find model collapse almost never occurs past shared epochs 260.}\label{fig:soup_gain_quantiles_loss}
+    \includegraphics[width=0.7\linewidth]{./figures/combined_prob_and_conditional_gain_with_ci.pdf}
     \caption{Probability of positive soup gain and conditional expected gain vs shared epochs. We find that the expected soup gain noisy, but is maximised in an ideal window of shared epochs. Past this point, and models are too similar, leading to minimal gains. Before this point, models are incompatible and rarely yield positive gain.}\label{fig:soup_gain_conditional_exp}
     % \Description{A series of scatter plot figures showing soup gain against various similarity and distance metrics between pairs of models, with Spearman correlation values.}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{./figures/model_collapse_vs_shared_epochs_with_ci.pdf}
+    \includegraphics[width=0.7\linewidth]{./figures/model_collapse_vs_shared_epochs_with_ci.pdf}
     \caption{We plot both the probability of model collapse and the probability that soup gain is positive over varying shared epochs, with 95\% bootstrapped confidence intervals. Model collapse is defined as the soup attaining less than $5\%$ test accuracy. Both model collapse and negative soup gain decrease with shared epochs. In particular, model collapse is very rare past epoch 200 and never occurs past epoch 250.}\label{fig:model_collapse}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{./figures/shared_epochs_vs_kl_mean_std.pdf}
+    \includegraphics[width=0.7\linewidth]{./figures/shared_epochs_vs_kl_mean_std.pdf}
     \caption{Shared epochs vs KL divergence. We plot the mean and standard deviation over each value of shared epochs. The full data has a Spearman correlation of $-0.66$. We conclude that we can noisily recover the number of shared epochs by measuring the KL divergence, and that model similarity can be controlled imprecisely by varying the number of shared epochs. }\label{fig:kl_shared_epochs}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{./figures/soup_gain_vs_all_metrics.png}
+    \includegraphics[width=0.8\linewidth]{./figures/soup_gain_vs_all_metrics.png}
     \caption{Soup gain vs various similarity and distance metrics between pairs of models. Each subplot shows the soup gain against one metric, with the Spearman correlation. All metrics perform similarly. We conclude that the more similar models are, the more likely souping is to not cause model collapse.}\label{fig:soup_gain_vs_all_metrics}
-    \includegraphics[width=0.5\linewidth]{./figures/soup_gain_vs_all_metrics_positive_soups.png}
-    \caption{Soup gain vs various similarity and distance metrics between pairs of models, for the subset of soups with positive soup gain. Each subplot shows the soup gain against one metric, with the Spearman correlation. Each metric correlates similarly with soup gain. We see that when models are very similar, soup gain is small, while more dissimilar models can yield larger soup gains.}\label{fig:soup_gain_vs_all_metrics_positive_soups}
+    \includegraphics[width=0.9\linewidth]{./figures/soup_gain_vs_all_metrics_positive_soups.png}
+    \caption{Soup gain vs various similarity and distance metrics between pairs of models, for the subset of soups with positive soup gain. Each subplot shows the soup gain against one metric, with the Spearman correlation. Each metric correlates similarly with soup gain. We see that when models are very similar, soup gain is small, while more dissimilar models can yield larger soup gains. }\label{fig:soup_gain_vs_all_metrics_positive_soups}
     % \Description{A series of scatter plot figures showing soup gain against various similarity and distance metrics between pairs of models, with Spearman correlation values.}
 \end{figure}
 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{./figures/transitivity_min.png}
+    \includegraphics[width=0.7\linewidth]{./figures/transitivity_min.png}
     \caption{Scatterplot of the soup gain of models $B$ and $C$ against the minimum soup gain of models $A$ with $B$ and $C$. Each point represents a triplet of models $(A, B, C)$. We observe a positive Spearman correlation of 0.59, suggesting that souping is fuzzily transitive. The correlation with the mean soup gain is lower, at 0.48.}
     \label{fig:transitivity_min}
     % \Description{A scatter plot figure showing the soup gain of models B and C against the minimum soup gain of models A with B and C.}
@@ -206,11 +208,17 @@ Epoch diff (BC) & $n$ & $p_{\text{fail}}$ \\
     \label{fig:transitivity_failure_raster}
 \end{figure}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{./figures/transitivity_neg_edge_acc_cdf.pdf}
+    \caption{}
+    \label{fig:transitivity_neg_edge_acc_cdf}
+\end{figure}
 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{./figures/soup_test_vs_corrupted.png}
+    \includegraphics[width=0.7\linewidth]{./figures/soup_test_vs_corrupted.png}
     \caption{Scatterplot of the soup gain on test vs corrupted data. There is a clear sub-linear trend with strong correlation. Such a close relationship is sensitive to the nature of the distribution shift. This plot mostly shows that when model collapse occurs on the original test set, it also occurs on the corrupted data.}
     \label{fig:test_vs_corrupted}
     % \Description{A scatter plot figure showing the soup gain on test vs corrupted data.}
@@ -218,7 +226,7 @@ Epoch diff (BC) & $n$ & $p_{\text{fail}}$ \\
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{./figures/soup_positive_gain_prob.pdf}
+    \includegraphics[width=0.7\linewidth]{./figures/soup_positive_gain_prob.pdf}
     \caption{Probability of positive gain for soups as a function of the number of shared epochs. We see that the probability of positive gain increases with the number of shared epochs, for both clean and corrupted data. However,the corrupted data consistently has a slightly lower probability of positive gain. Thus, while souping also helps on corrupted data, it is slightly less effective than on clean data.}
     \label{fig:soup_corrupted_positive_gain_prob}
     % \Description{A line plot figure showing probability of positive gain for soups as a function of the number of shared epochs, for both clean and corrupted data.}
@@ -226,7 +234,7 @@ Epoch diff (BC) & $n$ & $p_{\text{fail}}$ \\
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.5\linewidth]{./figures/soup_test_vs_corrupted_pos_soups.png}
+  \includegraphics[width=0.7\linewidth]{./figures/soup_test_vs_corrupted_pos_soups.png}
   \caption{Plot of soup gain on test vs corrupted data for only models with positive soup gain on the test set. Spearman correlation of 0.56. 
   % There is a moderate correlation. In general, when souping helps on the test set, it helps on corrupted data.
   }\label{fig:test_vs_corrupted_pos}
@@ -235,7 +243,7 @@ Epoch diff (BC) & $n$ & $p_{\text{fail}}$ \\
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{./figures/soup_robustness_cdf.png}
+    \includegraphics[width=0.7\linewidth]{./figures/soup_robustness_cdf.png}
     \caption{CDF of the difference in \emph{robustness gap} before and after souping. The robustness gap is defined as the difference in loss between the test set and the corrupted set. The robustness gap before souping is taken as the minimum robustness gap of the parents. We see a fairly symmetric distribution. It has mean -0.04 and median 0.02. We therefore conclude that souping does not systematically improve the robustness gap.}
     \label{fig:soup_robustness_cdf}
     % \Description{A line plot figure showing CDF of the difference in robustness gap before and after souping.}
